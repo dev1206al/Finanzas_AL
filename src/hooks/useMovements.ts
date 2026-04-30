@@ -7,25 +7,28 @@ interface MovementsFilter {
   year?: number
   month?: number   // 1-12, undefined = todos
   cardId?: string
+  dateFrom?: string  // YYYY-MM-DD — si se provee, ignora year/month
+  dateTo?: string
 }
 
 export function useMovements(filter: MovementsFilter = {}) {
   const { user } = useAuth()
-  const { year, month, cardId } = filter
+  const { year, month, cardId, dateFrom, dateTo } = filter
 
   return useQuery({
-    queryKey: ['movements', user?.id, year, month, cardId],
+    queryKey: ['movements', user?.id, year, month, cardId, dateFrom, dateTo],
     queryFn: async () => {
       let query = supabase
         .from('movements')
         .select('*, categories(*), cards(id, name, color)')
         .eq('user_id', user!.id)
-        // Mostramos TODOS (padres e hijos MSI) para ver cada cuota en su mes
         .order('date', { ascending: false })
 
       if (cardId) query = query.eq('card_id', cardId)
 
-      if (year && month) {
+      if (dateFrom && dateTo) {
+        query = query.gte('date', dateFrom).lte('date', dateTo)
+      } else if (year && month) {
         const from = `${year}-${String(month).padStart(2, '0')}-01`
         const lastDay = new Date(year, month, 0).getDate()
         const to = `${year}-${String(month).padStart(2, '0')}-${lastDay}`

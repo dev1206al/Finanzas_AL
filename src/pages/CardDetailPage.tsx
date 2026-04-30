@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Filter, Calendar } from 'lucide-react'
+import { ArrowLeft, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCards } from '../hooks/useCards'
 import { useMovements, useCreateMovement, useUpdateMovement, useDeleteMovement } from '../hooks/useMovements'
@@ -10,10 +10,10 @@ import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import SwipeRow from '../components/ui/SwipeRow'
 import PageHeader from '../components/ui/PageHeader'
-import { formatMXN, formatShortDate, MONTHS } from '../lib/format'
+import { formatMXN, formatShortDate, getPeriods } from '../lib/format'
 import type { Movement, MovementWithRelations } from '../types/database'
 
-const CURRENT_YEAR = new Date().getFullYear()
+type TypeFilter = 'all' | 'expense' | 'payment' | 'msi'
 
 function groupByDate(movements: MovementWithRelations[]) {
   const today = new Date().toISOString().slice(0, 10)
@@ -34,22 +34,46 @@ export default function CardDetailPage() {
   const { data: categories = [] } = useCategories()
   const card = cards.find(c => c.id === id)
 
-  const [year, setYear] = useState(CURRENT_YEAR)
-  const [month, setMonth] = useState<number | undefined>(new Date().getMonth() + 1)
+  const [periodIdx, setPeriodIdx] = useState(0)
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [catFilter, setCatFilter] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingMovement, setEditingMovement] = useState<MovementWithRelations | null>(null)
   const [deleting, setDeleting] = useState<{ rootId: string; isMsi: boolean } | null>(null)
 
-  const { data: movements = [], isLoading } = useMovements({ year, month, cardId: id })
+  const periods = useMemo(() => card ? getPeriods(card.cut_day) : [], [card?.cut_day])
+  const period = periods[periodIdx]
+
+  const { data: movements = [], isLoading } = useMovements({
+    cardId: id,
+    dateFrom: period?.start,
+    dateTo: period?.end,
+  })
   const createMovement = useCreateMovement()
   const updateMovement = useUpdateMovement()
   const deleteMovement = useDeleteMovement()
 
   if (!card) return null
 
+  // Totales del período completo (sin filtros de tipo/categoría)
   const totalExpenses = movements.filter(m => m.type === 'expense').reduce((s, m) => s + Math.abs(m.amount), 0)
   const totalPayments = movements.filter(m => m.type === 'payment' || m.type === 'income').reduce((s, m) => s + m.amount, 0)
   const balance = totalPayments - totalExpenses
+
+  // Categorías presentes en el período
+  const periodCategories = useMemo(() => {
+    const ids = new Set(movements.map(m => m.category_id).filter(Boolean))
+    return categories.filter(c => ids.has(c.id))
+  }, [movements, categories])
+
+  // Lista filtrada por tipo y categoría
+  const filtered = useMemo(() => movements.filter(m => {
+    if (typeFilter === 'expense' && m.type !== 'expense') return false
+    if (typeFilter === 'payment' && m.type !== 'payment' && m.type !== 'income') return false
+    if (typeFilter === 'msi' && !m.msi_parent_id && !(m.msi_months && m.msi_months > 1)) return false
+    if (catFilter && m.category_id !== catFilter) return false
+    return true
+  }), [movements, typeFilter, catFilter])
 
   async function handleCreate(data: Omit<Movement, 'id' | 'created_at' | 'user_id'>) {
     try {
@@ -78,13 +102,12 @@ export default function CardDetailPage() {
   }
 
   function requestDelete(m: { id: string; msi_parent_id?: string | null; msi_months?: number | null }) {
-    // Si es hijo MSI, el root es el padre; si es padre MSI, el root es él mismo
     const rootId = m.msi_parent_id ?? m.id
     const isMsi = !!(m.msi_parent_id || (m.msi_months && m.msi_months > 1))
     setDeleting({ rootId, isMsi })
   }
 
-  const groups = groupByDate(movements)
+  const groups = groupByDate(filtered)
 
   return (
     <div>
@@ -131,22 +154,54 @@ export default function CardDetailPage() {
           )}
         </div>
 
-        {/* Filtros */}
-        <div className="flex gap-2 px-4 pb-3">
-          <div className="flex items-center gap-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <select value={year} onChange={e => setYear(Number(e.target.value))} className="text-sm text-gray-700 dark:text-gray-200 bg-transparent outline-none">
-              {[CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-          <div className="flex items-center gap-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 flex-1">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <select value={month ?? ''} onChange={e => setMonth(e.target.value ? Number(e.target.value) : undefined)} className="text-sm text-gray-700 dark:text-gray-200 bg-transparent outline-none w-full">
-              <option value="">Todos</option>
-              {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-            </select>
-          </div>
+        {/* Selector de período de corte */}
+        <div className="px-4 pb-2">
+          <select
+            value={periodIdx}
+            onChange={e => { setPeriodIdx(Number(e.target.value)); setTypeFilter('all'); setCatFilter('') }}
+            className="w-full text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-200 outline-none"
+          >
+            {periods.map((p, i) => (
+              <option key={p.start} value={i}>{i === 0 ? `Período actual · ${p.label}` : p.label}</option>
+            ))}
+          </select>
         </div>
+
+        {/* Filtros de tipo */}
+        <div className="flex gap-1.5 px-4 pb-2 overflow-x-auto no-scrollbar">
+          {([
+            { key: 'all', label: 'Todos' },
+            { key: 'expense', label: 'Gastos' },
+            { key: 'payment', label: 'Pagos' },
+            { key: 'msi', label: 'MSI' },
+          ] as { key: TypeFilter; label: string }[]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => { setTypeFilter(key); setCatFilter('') }}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                typeFilter === key
+                  ? 'bg-violet-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Filtro por categoría (solo si hay categorías en el período) */}
+        {periodCategories.length > 0 && (
+          <div className="px-4 pb-3">
+            <select
+              value={catFilter}
+              onChange={e => setCatFilter(e.target.value)}
+              className="w-full text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-200 outline-none"
+            >
+              <option value="">Todas las categorías</option>
+              {periodCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        )}
       </PageHeader>
 
       {/* ── Lista de movimientos agrupados por fecha ── */}
