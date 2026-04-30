@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { useSwipeDown } from '../../hooks/useSwipeDown'
+import { resetMobileViewport } from '../../lib/viewport'
 
 interface ModalProps {
   title: string
@@ -9,18 +10,23 @@ interface ModalProps {
 }
 
 export default function Modal({ title, onClose, children }: ModalProps) {
-  const { panelRef, handleRef } = useSwipeDown(onClose)
+  const handleClose = useCallback(() => {
+    resetMobileViewport()
+    onClose()
+  }, [onClose])
+
+  const { panelRef, handleRef } = useSwipeDown(handleClose)
 
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     document.addEventListener('keydown', handler)
     return () => {
       document.body.style.overflow = prev
       document.removeEventListener('keydown', handler)
     }
-  }, [onClose])
+  }, [handleClose])
 
   return (
     /*
@@ -28,7 +34,7 @@ export default function Modal({ title, onClose, children }: ModalProps) {
       Móvil: bottom-sheet desde abajo. Desktop: modal centrado.
     */
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center animate-fade-in">
-      <div className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" onClick={handleClose} />
 
       <div
         ref={panelRef}
@@ -49,7 +55,7 @@ export default function Modal({ title, onClose, children }: ModalProps) {
         {/* Título */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
           <h2 className="font-semibold text-gray-900 dark:text-white">{title}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           </button>
         </div>

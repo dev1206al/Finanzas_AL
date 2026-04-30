@@ -9,6 +9,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog'
 import CardForm, { type CardFormData } from '../components/cards/CardForm'
 import { formatMXN } from '../lib/format'
 import PageHeader from '../components/ui/PageHeader'
+import { resetMobileViewport } from '../lib/viewport'
 
 export default function CardsPage() {
   const navigate = useNavigate()
@@ -22,10 +23,6 @@ export default function CardsPage() {
   const [editing, setEditing] = useState<Card | null>(null)
   const [deleting, setDeleting] = useState<Card | null>(null)
 
-  function refreshAfterChange() {
-    window.setTimeout(() => window.location.reload(), 250)
-  }
-
   async function handleCreate(data: CardFormData) {
     try {
       await createCard.mutateAsync({
@@ -36,7 +33,7 @@ export default function CardsPage() {
       })
       toast.success('Tarjeta agregada')
       setShowForm(false)
-      refreshAfterChange()
+      resetMobileViewport()
     } catch { toast.error('Error al agregar tarjeta') }
   }
 
@@ -50,7 +47,7 @@ export default function CardsPage() {
       })
       toast.success('Tarjeta actualizada')
       setEditing(null)
-      refreshAfterChange()
+      resetMobileViewport()
     } catch { toast.error('Error al actualizar') }
   }
 
@@ -59,7 +56,7 @@ export default function CardsPage() {
     try {
       await deleteCard.mutateAsync(deleting.id)
       toast.success('Tarjeta eliminada')
-      refreshAfterChange()
+      resetMobileViewport()
     } catch { toast.error('Error al eliminar') }
     finally { setDeleting(null) }
   }
@@ -68,7 +65,7 @@ export default function CardsPage() {
     try {
       await reorderCards.mutateAsync({ cards, cardId: card.id, direction })
       toast.success(direction === 'up' ? 'Tarjeta subida' : 'Tarjeta bajada')
-      refreshAfterChange()
+      resetMobileViewport()
     } catch { toast.error('Error al reordenar') }
   }
 
