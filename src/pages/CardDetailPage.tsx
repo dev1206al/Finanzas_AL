@@ -99,8 +99,11 @@ export default function CardDetailPage() {
             <p className="font-bold text-sm">{formatMXN(totalPayments)}</p>
           </div>
           <div>
-            <p className="text-white/70 text-xs">Balance</p>
-            <p className={`font-bold text-sm ${balance >= 0 ? 'text-green-300' : 'text-red-300'}`}>{formatMXN(balance)}</p>
+            <p className="text-white/70 text-xs mb-1">Balance</p>
+            {/* Píldora con fondo semitransparente para garantizar contraste en cualquier color */}
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full text-white ${balance >= 0 ? 'bg-black/25' : 'bg-black/35'}`}>
+              {balance >= 0 ? '+' : ''}{formatMXN(balance)}
+            </span>
           </div>
         </div>
 

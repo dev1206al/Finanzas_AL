@@ -10,7 +10,7 @@ export default function ConfirmDialog({
   message, onConfirm, onCancel, confirmLabel = 'Eliminar', danger = true,
 }: ConfirmDialogProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" onClick={onCancel} />
       <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-5 w-full max-w-xs border border-gray-100 dark:border-gray-800">
         <p className="text-gray-700 dark:text-gray-300 text-sm text-center mb-4">{message}</p>
