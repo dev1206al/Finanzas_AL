@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -16,10 +16,17 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+interface HistoryEntry {
+  merchant: string
+  category_id: string | null
+  date: string
+}
+
 interface MovementFormProps {
   cardId: string
   categories: Category[]
   cards?: Card[]
+  history?: HistoryEntry[]
   initial?: Pick<Movement, 'type' | 'date' | 'merchant' | 'amount' | 'category_id' | 'msi_months' | 'msi_parent_id' | 'notes'>
   onSubmit: (data: Omit<Movement, 'id' | 'created_at' | 'user_id'>) => Promise<void>
   onCancel: () => void
@@ -27,11 +34,12 @@ interface MovementFormProps {
 
 const MSI_OPTIONS = [0, ...Array.from({ length: 23 }, (_, i) => i + 2)]
 
-export default function MovementForm({ cardId, categories, cards, initial, onSubmit, onCancel }: MovementFormProps) {
+export default function MovementForm({ cardId, categories, cards, history, initial, onSubmit, onCancel }: MovementFormProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [selectedCardId, setSelectedCardId] = useState(cardId)
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false)
 
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: initial ? {
       type: initial.type,
@@ -53,6 +61,48 @@ export default function MovementForm({ cardId, categories, cards, initial, onSub
   })
 
   const type = watch('type')
+  const merchant = watch('merchant')
+  const categoryId = watch('category_id')
+
+  // Busca la categoría más frecuente para el establecimiento escrito
+  const suggestion = useMemo(() => {
+    if (!history || initial || suggestionDismissed) return null
+    const query = merchant?.trim().toLowerCase() ?? ''
+    if (query.length < 3) return null
+
+    const counts = new Map<string, { count: number; lastDate: string }>()
+    for (const entry of history) {
+      if (!entry.category_id) continue
+      const norm = entry.merchant.toLowerCase()
+      if (!norm.includes(query) && !query.includes(norm)) continue
+      const prev = counts.get(entry.category_id)
+      if (!prev || entry.date > prev.lastDate) {
+        counts.set(entry.category_id, {
+          count: (prev?.count ?? 0) + 1,
+          lastDate: entry.date,
+        })
+      } else {
+        counts.set(entry.category_id, { count: prev.count + 1, lastDate: prev.lastDate })
+      }
+    }
+
+    if (counts.size === 0) return null
+
+    const [bestId] = [...counts.entries()].sort((a, b) =>
+      b[1].count - a[1].count || b[1].lastDate.localeCompare(a[1].lastDate)
+    )[0]
+
+    return categories.find(c => c.id === bestId) ?? null
+  }, [merchant, history, categories, initial, suggestionDismissed])
+
+  // Oculta la sugerencia si el usuario eligió una categoría manualmente
+  const showSuggestion = suggestion && !categoryId
+
+  function applySuggestion() {
+    if (!suggestion) return
+    setValue('category_id', suggestion.id)
+    setSuggestionDismissed(true)
+  }
 
   async function handleSubmitForm(data: FormData) {
     const signedAmount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount)
@@ -114,6 +164,35 @@ export default function MovementForm({ cardId, categories, cards, initial, onSub
         </label>
         <input {...register('merchant')} placeholder="Nombre del lugar o concepto" className="input" />
         {errors.merchant && <p className="text-red-500 text-xs mt-1">{errors.merchant.message}</p>}
+
+        {/* Sugerencia de categoría */}
+        {showSuggestion && (
+          <div className="mt-2 flex items-center gap-2 bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800 rounded-xl px-3 py-2">
+            <span className="text-xs text-violet-600 dark:text-violet-400 flex-1">
+              💡 Sugerencia:{' '}
+              <span
+                className="font-semibold px-1.5 py-0.5 rounded-full text-white text-[11px]"
+                style={{ backgroundColor: suggestion.color }}
+              >
+                {suggestion.icon ? `${suggestion.icon} ` : ''}{suggestion.name}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={applySuggestion}
+              className="text-xs font-semibold text-violet-600 dark:text-violet-400 shrink-0"
+            >
+              Usar
+            </button>
+            <button
+              type="button"
+              onClick={() => setSuggestionDismissed(true)}
+              className="text-xs text-gray-400 shrink-0"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
 
       <div>
@@ -133,7 +212,7 @@ export default function MovementForm({ cardId, categories, cards, initial, onSub
         <select {...register('category_id')} className="input">
           <option value="">Sin categoría</option>
           {visibleCategories.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id}>{c.icon ? `${c.icon} ` : ''}{c.name}</option>
           ))}
         </select>
       </div>

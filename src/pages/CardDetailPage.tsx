@@ -333,7 +333,7 @@ export default function CardDetailPage() {
 
       {showForm && (
         <Modal title="Nuevo movimiento" onClose={() => setShowForm(false)}>
-          <MovementForm cardId={id!} categories={categories} onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
+          <MovementForm cardId={id!} categories={categories} history={allMovements} onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
         </Modal>
       )}
       {editingMovement && (
