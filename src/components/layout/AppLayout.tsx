@@ -17,8 +17,8 @@ export default function AppLayout() {
       <aside className="hidden md:flex flex-col w-56 lg:w-64 fixed left-0 top-0 h-full
                         bg-white dark:bg-gray-900
                         border-r border-gray-100 dark:border-gray-800 z-40">
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-gray-100 dark:border-gray-800">
+        {/* Logo — padding-top cubre el safe area en iPad con Dynamic Island */}
+        <div className="safe-header flex items-center gap-2.5 px-5 pb-5 border-b border-gray-100 dark:border-gray-800" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 20px)' }}>
           <img src="/logo.png" alt="Finanzas AL" className="w-8 h-8 rounded-xl flex-shrink-0" />
           <span className="font-bold text-gray-900 dark:text-white text-base">Finanzas AL</span>
         </div>

@@ -57,7 +57,7 @@ export default function SummaryPage() {
   return (
     <div>
       {/* ── Sticky header con filtros y totales ── */}
-      <div className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
+      <div className="safe-header sticky top-0 z-30 bg-gray-50 dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
         <div className="px-4 pt-3 pb-2">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Resumen</h1>
 
