@@ -270,7 +270,7 @@ export default function DashboardPage() {
 
       {/* ── Modal Egreso rápido ── */}
       {quickAdd === 'expense' && defaultCard && (
-        <Modal title="Registrar egreso" onClose={() => setQuickAdd(null)}>
+        <Modal title="Registrar movimiento" onClose={() => setQuickAdd(null)}>
           <MovementForm
             cardId={defaultCard.id}
             categories={categories}
