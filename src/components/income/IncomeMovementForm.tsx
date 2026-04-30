@@ -78,12 +78,13 @@ export default function IncomeMovementForm({ accounts, categories, onSubmit, onC
         {errors.account_id && <p className="text-red-500 text-xs mt-1">{errors.account_id.message}</p>}
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Concepto *</label>
+        <input {...register('concept')} placeholder="ej. Sueldo quincenal" className="input" />
+        {errors.concept && <p className="text-red-500 text-xs mt-1">{errors.concept.message}</p>}
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Concepto *</label>
-          <input {...register('concept')} placeholder="ej. Sueldo quincenal" className="input" />
-          {errors.concept && <p className="text-red-500 text-xs mt-1">{errors.concept.message}</p>}
-        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha *</label>
           <input {...register('date')} type="date" className="input" />
@@ -93,17 +94,19 @@ export default function IncomeMovementForm({ accounts, categories, onSubmit, onC
           <input {...register('amount', { valueAsNumber: true })} type="number" step="0.01" placeholder="0.00" className="input" />
           {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
         </div>
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
-          <select {...register('category_id')} className="input">
-            <option value="">Sin categoría</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </div>
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
-          <input {...register('notes')} placeholder="Opcional" className="input" />
-        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
+        <select {...register('category_id')} className="input">
+          <option value="">Sin categoría</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
+        <input {...register('notes')} placeholder="Opcional" className="input" />
       </div>
 
       <div className="form-actions">

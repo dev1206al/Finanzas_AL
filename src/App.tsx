@@ -55,6 +55,7 @@ export default function App() {
             <AppRoutes />
             <Toaster
               position="top-center"
+              containerStyle={{ top: 'max(env(safe-area-inset-top, 0px) + 12px, 60px)' }}
               toastOptions={{
                 style: { borderRadius: '12px', fontSize: '14px', fontWeight: '500' },
                 duration: 2500,

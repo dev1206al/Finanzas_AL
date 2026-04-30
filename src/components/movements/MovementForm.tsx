@@ -99,52 +99,51 @@ export default function MovementForm({ cardId, categories, cards, onSubmit, onCa
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {type === 'expense' ? 'Establecimiento' : 'Concepto'} *
-          </label>
-          <input {...register('merchant')} placeholder="Nombre del lugar o concepto" className="input" />
-          {errors.merchant && <p className="text-red-500 text-xs mt-1">{errors.merchant.message}</p>}
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {type === 'expense' ? 'Establecimiento' : 'Concepto'} *
+        </label>
+        <input {...register('merchant')} placeholder="Nombre del lugar o concepto" className="input" />
+        {errors.merchant && <p className="text-red-500 text-xs mt-1">{errors.merchant.message}</p>}
+      </div>
 
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha *</label>
           <input {...register('date')} type="date" className="input" />
           {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>}
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Monto *</label>
           <input {...register('amount', { valueAsNumber: true })} type="number" step="0.01" placeholder="0.00" className="input" />
           {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
         </div>
+      </div>
 
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
-          <select {...register('category_id')} className="input">
-            <option value="">Sin categoría</option>
-            {visibleCategories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
+        <select {...register('category_id')} className="input">
+          <option value="">Sin categoría</option>
+          {visibleCategories.map(c => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+      </div>
+
+      {type === 'expense' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses sin intereses</label>
+          <select {...register('msi_months')} className="input">
+            {MSI_OPTIONS.map(m => (
+              <option key={m} value={m}>{m === 0 || m === 1 ? 'Sin MSI' : `${m} meses`}</option>
             ))}
           </select>
         </div>
+      )}
 
-        {type === 'expense' && (
-          <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses sin intereses</label>
-            <select {...register('msi_months')} className="input">
-              {MSI_OPTIONS.map(m => (
-                <option key={m} value={m}>{m === 0 || m === 1 ? 'Sin MSI' : `${m} meses`}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
-          <input {...register('notes')} placeholder="Opcional" className="input" />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
+        <input {...register('notes')} placeholder="Opcional" className="input" />
       </div>
 
       <div
