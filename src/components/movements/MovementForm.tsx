@@ -67,12 +67,12 @@ export default function MovementForm({ cardId, categories, onSubmit, onCancel }:
   return (
     <form onSubmit={handleSubmit(handleSubmitForm)} className="space-y-4">
       {/* Tipo */}
-      <div className="flex rounded-xl bg-gray-100 p-1">
+      <div className="flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
         {(['expense', 'payment', 'income'] as const).map(t => (
           <label
             key={t}
             className={`flex-1 text-center py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
-              type === t ? 'bg-white shadow text-indigo-600' : 'text-gray-500'
+              type === t ? 'bg-white dark:bg-gray-700 shadow text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
             }`}
           >
             <input {...register('type')} type="radio" value={t} className="sr-only" />
@@ -83,7 +83,7 @@ export default function MovementForm({ cardId, categories, onSubmit, onCancel }:
 
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {type === 'expense' ? 'Establecimiento' : 'Concepto'} *
           </label>
           <input {...register('merchant')} placeholder="Nombre del lugar o concepto" className="input" />
@@ -91,19 +91,19 @@ export default function MovementForm({ cardId, categories, onSubmit, onCancel }:
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha *</label>
           <input {...register('date')} type="date" className="input" />
           {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Monto *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Monto *</label>
           <input {...register('amount', { valueAsNumber: true })} type="number" step="0.01" placeholder="0.00" className="input" />
           {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
         </div>
 
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
           <select {...register('category_id')} className="input">
             <option value="">Sin categoría</option>
             {visibleCategories.map(c => (
@@ -114,7 +114,7 @@ export default function MovementForm({ cardId, categories, onSubmit, onCancel }:
 
         {type === 'expense' && (
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Meses sin intereses</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses sin intereses</label>
             <select {...register('msi_months')} className="input">
               {MSI_OPTIONS.map(m => (
                 <option key={m} value={m}>{m === 0 || m === 1 ? 'Sin MSI' : `${m} meses`}</option>
@@ -124,21 +124,21 @@ export default function MovementForm({ cardId, categories, onSubmit, onCancel }:
         )}
 
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
           <input {...register('notes')} placeholder="Opcional" className="input" />
         </div>
       </div>
 
       <div
         className={`rounded-xl p-3 text-sm text-center font-medium ${
-          type === 'expense' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
+          type === 'expense' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400' : 'bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400'
         }`}
       >
         {type === 'expense' ? 'Este movimiento restará del balance' : 'Este movimiento sumará al balance'}
       </div>
 
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600">
+        <button type="button" onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300">
           Cancelar
         </button>
         <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium disabled:opacity-50">

@@ -46,7 +46,7 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {/* Color */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Color de tarjeta</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color de tarjeta</label>
         <div className="flex flex-wrap gap-2">
           {CARD_COLORS.map(c => (
             <button
@@ -62,38 +62,38 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
 
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre *</label>
           <input {...register('name')} placeholder="HSBC, BBVA…" className="input" />
           {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Banco</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Banco</label>
           <input {...register('bank')} placeholder="Opcional" className="input" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Últimos 4 dígitos</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Últimos 4 dígitos</label>
           <input {...register('last_four')} placeholder="1234" maxLength={4} className="input" />
           {errors.last_four && <p className="text-red-500 text-xs mt-1">{errors.last_four.message}</p>}
         </div>
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Límite de crédito *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Límite de crédito *</label>
           <input {...register('credit_limit', { valueAsNumber: true })} type="number" step="0.01" placeholder="0.00" className="input" />
           {errors.credit_limit && <p className="text-red-500 text-xs mt-1">{errors.credit_limit.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Día de corte *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Día de corte *</label>
           <input {...register('cut_day', { valueAsNumber: true })} type="number" min={1} max={31} className="input" />
           {errors.cut_day && <p className="text-red-500 text-xs mt-1">{errors.cut_day.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Día de pago *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Día de pago *</label>
           <input {...register('payment_day', { valueAsNumber: true })} type="number" min={1} max={31} className="input" />
           {errors.payment_day && <p className="text-red-500 text-xs mt-1">{errors.payment_day.message}</p>}
         </div>
       </div>
 
       <div className="flex gap-2 pt-2">
-        <button type="button" onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600">
+        <button type="button" onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300">
           Cancelar
         </button>
         <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium disabled:opacity-50">
