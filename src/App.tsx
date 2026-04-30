@@ -9,7 +9,7 @@ import DashboardPage from './pages/DashboardPage'
 import CardsPage from './pages/CardsPage'
 import CardDetailPage from './pages/CardDetailPage'
 import SummaryPage from './pages/SummaryPage'
-import IncomePage from './pages/IncomePage'
+import MovementsPage from './pages/MovementsPage'
 import SettingsPage from './pages/SettingsPage'
 import CategoriesPage from './pages/CategoriesPage'
 
@@ -35,7 +35,8 @@ function AppRoutes() {
         <Route path="/tarjetas" element={<CardsPage />} />
         <Route path="/tarjetas/:id" element={<CardDetailPage />} />
         <Route path="/resumen" element={<SummaryPage />} />
-        <Route path="/ingresos" element={<IncomePage />} />
+        <Route path="/movimientos" element={<MovementsPage />} />
+        <Route path="/ingresos" element={<Navigate to="/movimientos" replace />} />
         <Route path="/ajustes" element={<SettingsPage />} />
         <Route path="/ajustes/categorias" element={<CategoriesPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

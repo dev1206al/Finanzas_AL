@@ -5,7 +5,7 @@ const navItems = [
   { to: '/',         icon: LayoutDashboard, label: 'Inicio'   },
   { to: '/tarjetas', icon: CreditCard,      label: 'Tarjetas' },
   { to: '/resumen',  icon: BarChart2,       label: 'Resumen'  },
-  { to: '/ingresos', icon: Wallet,          label: 'Ingresos' },
+  { to: '/movimientos', icon: Wallet,        label: 'Movimientos' },
   { to: '/ajustes',  icon: Settings,        label: 'Ajustes'  },
 ]
 

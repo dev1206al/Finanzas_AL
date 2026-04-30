@@ -62,8 +62,8 @@ export default function CategoryForm({ initial, onSubmit, onCancel }: CategoryFo
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
-        <div className="flex flex-wrap gap-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
+        <div className="flex flex-wrap gap-2 items-center">
           {CAT_COLORS.map(c => (
             <button
               key={c}
@@ -73,6 +73,21 @@ export default function CategoryForm({ initial, onSubmit, onCancel }: CategoryFo
               style={{ backgroundColor: c }}
             />
           ))}
+          <label
+            className="w-7 h-7 rounded-full cursor-pointer border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden"
+            title="Color personalizado"
+            style={{ backgroundColor: CAT_COLORS.includes(selectedColor) ? 'transparent' : selectedColor }}
+          >
+            <input
+              type="color"
+              value={selectedColor}
+              onChange={e => setValue('color', e.target.value)}
+              className="opacity-0 absolute w-px h-px"
+            />
+            {CAT_COLORS.includes(selectedColor) && (
+              <span className="text-gray-400 dark:text-gray-500 text-[10px] leading-none">+</span>
+            )}
+          </label>
         </div>
       </div>
 

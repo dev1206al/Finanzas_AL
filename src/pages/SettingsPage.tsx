@@ -4,17 +4,38 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { supabase } from '../lib/supabase'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
+import Modal from '../components/ui/Modal'
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [showEditName, setShowEditName] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [saving, setSaving] = useState(false)
 
   async function handleLogout() {
     try { await signOut() }
     catch { toast.error('Error al cerrar sesión') }
+  }
+
+  async function handleSaveName() {
+    const trimmed = newName.trim()
+    if (!trimmed) return
+    setSaving(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { full_name: trimmed } })
+      if (error) throw error
+      toast.success('Nombre actualizado')
+      setShowEditName(false)
+    } catch {
+      toast.error('Error al actualizar')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const name = user?.user_metadata?.full_name ?? 'Usuario'
@@ -68,11 +89,11 @@ export default function SettingsPage() {
           </button>
 
           <button
-            onClick={() => navigate('/perfil')}
+            onClick={() => { setNewName(name); setShowEditName(true) }}
             className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 dark:active:bg-gray-800 transition-colors"
           >
             <User className="w-5 h-5 text-indigo-500" />
-            <span className="flex-1 text-left text-sm font-medium text-gray-900 dark:text-white">Editar perfil</span>
+            <span className="flex-1 text-left text-sm font-medium text-gray-900 dark:text-white">Editar nombre</span>
             <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
           </button>
         </div>
@@ -93,6 +114,41 @@ export default function SettingsPage() {
           onConfirm={handleLogout}
           onCancel={() => setConfirmLogout(false)}
         />
+      )}
+
+      {showEditName && (
+        <Modal title="Editar nombre" onClose={() => setShowEditName(false)}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
+              <input
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSaveName()}
+                className="input"
+                placeholder="Tu nombre"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowEditName(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveName}
+                disabled={saving || !newName.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium disabled:opacity-50"
+              >
+                {saving ? 'Guardando…' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   )

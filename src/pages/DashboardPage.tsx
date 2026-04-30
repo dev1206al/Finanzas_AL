@@ -1,11 +1,17 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, TrendingDown, TrendingUp, CreditCard, ChevronRight } from 'lucide-react'
+import { AlertCircle, TrendingDown, TrendingUp, CreditCard, ChevronRight, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useCards, getNextDate, getDaysUntil } from '../hooks/useCards'
-import { useMovements } from '../hooks/useMovements'
-import { useIncomeMovements } from '../hooks/useIncomeAccounts'
+import { useMovements, useCreateMovement } from '../hooks/useMovements'
+import { useIncomeAccounts, useIncomeMovements, useCreateIncomeMovement } from '../hooks/useIncomeAccounts'
+import { useCategories } from '../hooks/useCategories'
 import { useAuth } from '../context/AuthContext'
 import { formatMXN, MONTHS } from '../lib/format'
+import Modal from '../components/ui/Modal'
+import MovementForm from '../components/movements/MovementForm'
+import IncomeMovementForm from '../components/income/IncomeMovementForm'
+import type { Movement, IncomeMovement } from '../types/database'
 
 const now = new Date()
 const YEAR = now.getFullYear()
@@ -14,31 +20,35 @@ const MONTH = now.getMonth() + 1
 export default function DashboardPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+
   const { data: cards = [] } = useCards()
+  const { data: categories = [] } = useCategories()
+  const { data: accounts = [] } = useIncomeAccounts()
   const { data: movements = [] } = useMovements({ year: YEAR, month: MONTH })
   const { data: incomeMovements = [] } = useIncomeMovements({ year: YEAR, month: MONTH })
 
-  const name = user?.user_metadata?.full_name?.split(' ')[0] ?? 'Luis'
+  const createMovement = useCreateMovement()
+  const createIncomeMovement = useCreateIncomeMovement()
 
+  // 'expense' = egreso de tarjeta, 'income' = movimiento de cuenta, null = cerrado
+  const [quickAdd, setQuickAdd] = useState<'expense' | 'income' | null>(null)
+
+  const name = user?.user_metadata?.full_name?.split(' ')[0] ?? 'Usuario'
   const totalExpenses = movements.filter(m => m.type === 'expense').reduce((s, m) => s + Math.abs(m.amount), 0)
   const totalIncome = incomeMovements.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0)
 
   const upcomingPayments = useMemo(() => {
     return cards
-      .map(card => {
-        const paymentDate = getNextDate(card.payment_day)
-        const days = getDaysUntil(new Date(paymentDate))
-        return { card, days }
-      })
+      .map(card => ({ card, days: getDaysUntil(new Date(getNextDate(card.payment_day))) }))
       .filter(({ days }) => days <= 7)
       .sort((a, b) => a.days - b.days)
   }, [cards])
 
   const cardDebts = useMemo(() => {
     return cards.map(card => {
-      const expenses = movements.filter(m => m.card_id === card.id && m.type === 'expense')
+      const exp = movements.filter(m => m.card_id === card.id && m.type === 'expense')
       const paid = movements.filter(m => m.card_id === card.id && (m.type === 'payment' || m.type === 'income'))
-      const debt = expenses.reduce((s, m) => s + Math.abs(m.amount), 0) - paid.reduce((s, m) => s + m.amount, 0)
+      const debt = exp.reduce((s, m) => s + Math.abs(m.amount), 0) - paid.reduce((s, m) => s + m.amount, 0)
       return { card, debt }
     }).filter(({ debt }) => debt > 0).sort((a, b) => b.debt - a.debt)
   }, [cards, movements])
@@ -50,25 +60,63 @@ export default function DashboardPage() {
     return 'Buenas noches'
   })()
 
+  async function handleAddExpense(data: Omit<Movement, 'id' | 'created_at' | 'user_id'>) {
+    try {
+      await createMovement.mutateAsync(data)
+      toast.success('Gasto registrado')
+      setQuickAdd(null)
+    } catch { toast.error('Error al guardar') }
+  }
+
+  async function handleAddIncome(data: Omit<IncomeMovement, 'id' | 'created_at' | 'user_id'>) {
+    try {
+      await createIncomeMovement.mutateAsync(data)
+      toast.success('Movimiento registrado')
+      setQuickAdd(null)
+    } catch { toast.error('Error al guardar') }
+  }
+
+  // Tarjeta por defecto para el formulario rápido (la primera activa)
+  const defaultCard = cards[0]
+
   return (
     <div>
       {/* ── Sticky header ── */}
       <div className="page-header">
         <p className="text-xs text-gray-500 dark:text-gray-400">{greeting},</p>
         <div className="flex items-end justify-between">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-            {name}
-          </h1>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">
-            {MONTHS[MONTH - 1]} {YEAR}
-          </p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{name}</h1>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{MONTHS[MONTH - 1]} {YEAR}</p>
         </div>
       </div>
 
-      {/* ── Contenido scrollable ── */}
       <div className="px-4 py-4 space-y-5">
 
-        {/* Resumen del mes */}
+        {/* ── Botones de acción rápida ── */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => {
+              if (cards.length === 0) { toast.error('Primero agrega una tarjeta'); return }
+              setQuickAdd('expense')
+            }}
+            className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 active:scale-95 transition-all text-white rounded-2xl py-3.5 font-semibold text-sm shadow-sm"
+          >
+            <ArrowUpRight className="w-5 h-5" />
+            Egreso
+          </button>
+          <button
+            onClick={() => {
+              if (accounts.length === 0) { toast.error('Primero agrega una cuenta'); return }
+              setQuickAdd('income')
+            }}
+            className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 active:scale-95 transition-all text-white rounded-2xl py-3.5 font-semibold text-sm shadow-sm"
+          >
+            <ArrowDownLeft className="w-5 h-5" />
+            Ingreso
+          </button>
+        </div>
+
+        {/* ── Resumen del mes ── */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-red-50 dark:bg-red-950/40 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
@@ -86,7 +134,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Pagos próximos */}
+        {/* ── Pagos próximos ── */}
         {upcomingPayments.length > 0 && (
           <div>
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
@@ -98,12 +146,10 @@ export default function DashboardPage() {
                 <div
                   key={card.id}
                   onClick={() => navigate(`/tarjetas/${card.id}`)}
-                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer active:scale-98 transition-transform ${
-                    days === 0
-                      ? 'bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800'
-                      : days <= 2
-                      ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800'
-                      : 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800'
+                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer active:scale-[0.98] transition-transform ${
+                    days === 0 ? 'bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800'
+                    : days <= 2 ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800'
+                    : 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800'
                   }`}
                 >
                   <div className="w-8 h-8 rounded-lg flex-shrink-0" style={{ backgroundColor: card.color }} />
@@ -120,7 +166,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Deuda por tarjeta */}
+        {/* ── Deuda por tarjeta ── */}
         {cardDebts.length > 0 && (
           <div>
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
@@ -132,17 +178,14 @@ export default function DashboardPage() {
                 <div
                   key={card.id}
                   onClick={() => navigate(`/tarjetas/${card.id}`)}
-                  className="card p-3 flex items-center gap-3 cursor-pointer active:scale-98 transition-transform"
+                  className="card p-3 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
                 >
                   <div className="w-2.5 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: card.color }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{card.name}</p>
                     {card.credit_limit > 0 && (
                       <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1 mt-1">
-                        <div
-                          className="h-1 rounded-full"
-                          style={{ backgroundColor: card.color, width: `${Math.min((debt / card.credit_limit) * 100, 100)}%` }}
-                        />
+                        <div className="h-1 rounded-full" style={{ backgroundColor: card.color, width: `${Math.min((debt / card.credit_limit) * 100, 100)}%` }} />
                       </div>
                     )}
                   </div>
@@ -154,7 +197,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Sin tarjetas */}
+        {/* Sin tarjetas ni cuentas */}
         {cards.length === 0 && (
           <div
             onClick={() => navigate('/tarjetas')}
@@ -166,6 +209,31 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* ── Modal Egreso rápido (tarjeta de crédito) ── */}
+      {quickAdd === 'expense' && defaultCard && (
+        <Modal title="Registrar egreso" onClose={() => setQuickAdd(null)}>
+          <MovementForm
+            cardId={defaultCard.id}
+            categories={categories}
+            cards={cards}
+            onSubmit={handleAddExpense}
+            onCancel={() => setQuickAdd(null)}
+          />
+        </Modal>
+      )}
+
+      {/* ── Modal Ingreso rápido (cuenta) ── */}
+      {quickAdd === 'income' && (
+        <Modal title="Registrar movimiento" onClose={() => setQuickAdd(null)}>
+          <IncomeMovementForm
+            accounts={accounts}
+            categories={categories}
+            onSubmit={handleAddIncome}
+            onCancel={() => setQuickAdd(null)}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

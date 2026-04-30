@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import type { Category, Movement } from '../../types/database'
+import type { Card, Category, Movement } from '../../types/database'
 
 const schema = z.object({
   type: z.enum(['expense', 'payment', 'income']),
@@ -18,14 +19,16 @@ type FormData = z.infer<typeof schema>
 interface MovementFormProps {
   cardId: string
   categories: Category[]
+  cards?: Card[]
   onSubmit: (data: Omit<Movement, 'id' | 'created_at' | 'user_id'>) => Promise<void>
   onCancel: () => void
 }
 
 const MSI_OPTIONS = [0, 3, 6, 9, 12, 18, 24]
 
-export default function MovementForm({ cardId, categories, onSubmit, onCancel }: MovementFormProps) {
+export default function MovementForm({ cardId, categories, cards, onSubmit, onCancel }: MovementFormProps) {
   const today = new Date().toISOString().slice(0, 10)
+  const [selectedCardId, setSelectedCardId] = useState(cardId)
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -43,11 +46,10 @@ export default function MovementForm({ cardId, categories, onSubmit, onCancel }:
   const type = watch('type')
 
   async function handleSubmitForm(data: FormData) {
-    // Gastos son negativos, pagos/ingresos positivos
     const signedAmount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount)
 
     await onSubmit({
-      card_id: cardId,
+      card_id: selectedCardId,
       type: data.type,
       date: data.date,
       merchant: data.merchant,
@@ -66,6 +68,22 @@ export default function MovementForm({ cardId, categories, onSubmit, onCancel }:
 
   return (
     <form onSubmit={handleSubmit(handleSubmitForm)} className="space-y-4">
+      {/* Selector de tarjeta (solo cuando se pasan múltiples) */}
+      {cards && cards.length > 1 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tarjeta *</label>
+          <select
+            value={selectedCardId}
+            onChange={e => setSelectedCardId(e.target.value)}
+            className="input"
+          >
+            {cards.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Tipo */}
       <div className="flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
         {(['expense', 'payment', 'income'] as const).map(t => (

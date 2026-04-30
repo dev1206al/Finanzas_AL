@@ -47,7 +47,7 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
       {/* Color */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color de tarjeta</label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {CARD_COLORS.map(c => (
             <button
               key={c}
@@ -57,6 +57,21 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
               style={{ backgroundColor: c }}
             />
           ))}
+          <label
+            className="w-7 h-7 rounded-full cursor-pointer border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden"
+            title="Color personalizado"
+            style={{ backgroundColor: CARD_COLORS.includes(selectedColor) ? 'transparent' : selectedColor }}
+          >
+            <input
+              type="color"
+              value={selectedColor}
+              onChange={e => setValue('color', e.target.value)}
+              className="opacity-0 absolute w-px h-px"
+            />
+            {CARD_COLORS.includes(selectedColor) && (
+              <span className="text-gray-400 dark:text-gray-500 text-[10px] leading-none">+</span>
+            )}
+          </label>
         </div>
       </div>
 
