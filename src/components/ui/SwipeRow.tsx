@@ -43,16 +43,25 @@ export default function SwipeRow({ children, onDelete }: SwipeRowProps) {
   }
 
   return (
-    <div className="swipe-row-container">
-      {/* Botón de eliminar oculto bajo el contenido */}
+    <div className="swipe-row-container group">
+      {/* Mobile: botón rojo revelado por swipe */}
       {swiped && (
-        <button
-          className="swipe-row-action"
-          onClick={handleDeleteClick}
-        >
+        <button className="swipe-row-action sm:hidden" onClick={handleDeleteClick}>
           <Trash2 className="w-5 h-5 text-white" />
         </button>
       )}
+
+      {/* Desktop: botón visible al hover */}
+      <button
+        className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-10
+                   opacity-0 group-hover:opacity-100 transition-opacity
+                   p-1.5 rounded-lg text-red-400
+                   hover:bg-red-50 dark:hover:bg-red-950/40"
+        onClick={handleDeleteClick}
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+
       <div
         className="swipe-row-content"
         style={{ transform: `translateX(-${offset}px)` }}

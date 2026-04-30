@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, CreditCard, BarChart2, Wallet, Settings } from 'lucide-react'
+import { LayoutDashboard, CreditCard, BarChart2, Wallet, Settings, RefreshCw } from 'lucide-react'
+import { usePullToRefresh } from '../../hooks/usePullToRefresh'
 
 const navItems = [
   { to: '/',         icon: LayoutDashboard, label: 'Inicio'   },
@@ -10,6 +11,8 @@ const navItems = [
 ]
 
 export default function AppLayout() {
+  const { pullY, refreshing, THRESHOLD } = usePullToRefresh()
+
   return (
     <div className="flex min-h-dvh bg-gray-50 dark:bg-gray-950">
 
@@ -57,6 +60,21 @@ export default function AppLayout() {
         md:pb-0: en desktop no hay bottom nav.
         md:ml-56: compensar el sidebar fijo.
       */}
+      {/* Pull-to-refresh indicator — mobile only */}
+      {(pullY > 8 || refreshing) && (
+        <div
+          className="md:hidden fixed left-0 right-0 z-30 flex justify-center pointer-events-none"
+          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${Math.max(pullY - 16, 4)}px)` }}
+        >
+          <div
+            className={`bg-white dark:bg-gray-800 rounded-full p-2 shadow-md ${refreshing ? 'animate-spin' : ''}`}
+            style={{ opacity: refreshing ? 1 : Math.min(pullY / THRESHOLD, 1) }}
+          >
+            <RefreshCw className="w-4 h-4 text-violet-600" />
+          </div>
+        </div>
+      )}
+
       <main className="flex-1 md:ml-56 lg:ml-64 min-h-dvh pb-nav md:pb-0">
         <div className="max-w-2xl mx-auto md:px-2 lg:px-4">
           <Outlet />
