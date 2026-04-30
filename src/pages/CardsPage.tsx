@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Pencil, Trash2, CreditCard, AlertCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, CreditCard, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useCards, useCreateCard, useUpdateCard, useDeleteCard, getNextDate, getDaysUntil } from '../hooks/useCards'
+import { useCards, useCreateCard, useUpdateCard, useDeleteCard, useReorderCards, getNextDate, getDaysUntil } from '../hooks/useCards'
 import type { Card } from '../types/database'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
@@ -16,10 +16,15 @@ export default function CardsPage() {
   const createCard = useCreateCard()
   const updateCard = useUpdateCard()
   const deleteCard = useDeleteCard()
+  const reorderCards = useReorderCards()
 
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Card | null>(null)
   const [deleting, setDeleting] = useState<Card | null>(null)
+
+  function refreshAfterChange() {
+    window.setTimeout(() => window.location.reload(), 250)
+  }
 
   async function handleCreate(data: CardFormData) {
     try {
@@ -31,6 +36,7 @@ export default function CardsPage() {
       })
       toast.success('Tarjeta agregada')
       setShowForm(false)
+      refreshAfterChange()
     } catch { toast.error('Error al agregar tarjeta') }
   }
 
@@ -44,6 +50,7 @@ export default function CardsPage() {
       })
       toast.success('Tarjeta actualizada')
       setEditing(null)
+      refreshAfterChange()
     } catch { toast.error('Error al actualizar') }
   }
 
@@ -52,8 +59,17 @@ export default function CardsPage() {
     try {
       await deleteCard.mutateAsync(deleting.id)
       toast.success('Tarjeta eliminada')
+      refreshAfterChange()
     } catch { toast.error('Error al eliminar') }
     finally { setDeleting(null) }
+  }
+
+  async function handleMove(card: Card, direction: 'up' | 'down') {
+    try {
+      await reorderCards.mutateAsync({ cards, cardId: card.id, direction })
+      toast.success(direction === 'up' ? 'Tarjeta subida' : 'Tarjeta bajada')
+      refreshAfterChange()
+    } catch { toast.error('Error al reordenar') }
   }
 
   return (
@@ -87,30 +103,58 @@ export default function CardsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {cards.map(card => {
+            {cards.map((card, index) => {
               const paymentDate = getNextDate(card.payment_day)
               const cutDate = getNextDate(card.cut_day)
               const daysToPayment = getDaysUntil(paymentDate)
               const urgent = daysToPayment <= 3
+              const isFirst = index === 0
+              const isLast = index === cards.length - 1
 
               return (
                 <div key={card.id} className="card overflow-hidden">
                   {/* Header con color de tarjeta */}
                   <div className="p-4 text-white" style={{ backgroundColor: card.color }}>
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-semibold text-lg leading-tight">{card.name}</p>
                         {card.bank && <p className="text-white/70 text-xs mt-0.5">{card.bank}</p>}
                         {card.last_four && <p className="text-white/60 text-xs mt-1 font-mono">•••• {card.last_four}</p>}
                       </div>
-                      <div className="flex gap-1.5">
+                      <div className="flex gap-1.5 flex-shrink-0">
                         <button
+                          type="button"
+                          aria-label={`Subir ${card.name}`}
+                          title="Subir"
+                          disabled={isFirst || reorderCards.isPending}
+                          onClick={e => { e.stopPropagation(); handleMove(card, 'up') }}
+                          className="p-1.5 rounded-lg bg-white/20 active:bg-white/40 disabled:opacity-35 disabled:active:bg-white/20"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Bajar ${card.name}`}
+                          title="Bajar"
+                          disabled={isLast || reorderCards.isPending}
+                          onClick={e => { e.stopPropagation(); handleMove(card, 'down') }}
+                          className="p-1.5 rounded-lg bg-white/20 active:bg-white/40 disabled:opacity-35 disabled:active:bg-white/20"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Editar ${card.name}`}
+                          title="Editar"
                           onClick={e => { e.stopPropagation(); setEditing(card) }}
                           className="p-1.5 rounded-lg bg-white/20 active:bg-white/40"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button
+                          type="button"
+                          aria-label={`Eliminar ${card.name}`}
+                          title="Eliminar"
                           onClick={e => { e.stopPropagation(); setDeleting(card) }}
                           className="p-1.5 rounded-lg bg-white/20 active:bg-white/40"
                         >

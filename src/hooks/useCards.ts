@@ -13,6 +13,7 @@ export function useCards() {
         .from('cards')
         .select('*')
         .eq('user_id', user!.id)
+        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true })
       if (error) throw error
       return data as Card[]
@@ -26,10 +27,19 @@ export function useCreateCard() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async (card: Omit<Card, 'id' | 'created_at' | 'user_id'>) => {
+    mutationFn: async (card: Omit<Card, 'id' | 'created_at' | 'user_id' | 'sort_order'>) => {
+      const { data: lastCard, error: orderError } = await supabase
+        .from('cards')
+        .select('sort_order')
+        .eq('user_id', user!.id)
+        .order('sort_order', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (orderError) throw orderError
+
       const { data, error } = await supabase
         .from('cards')
-        .insert({ ...card, user_id: user!.id })
+        .insert({ ...card, user_id: user!.id, sort_order: (lastCard?.sort_order ?? 0) + 1 })
         .select()
         .single()
       if (error) throw error
@@ -64,6 +74,48 @@ export function useDeleteCard() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('cards').delete().eq('id', id)
       if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cards'] }),
+  })
+}
+
+export function useReorderCards() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      cards,
+      cardId,
+      direction,
+    }: {
+      cards: Card[]
+      cardId: string
+      direction: 'up' | 'down'
+    }) => {
+      const currentIndex = cards.findIndex(card => card.id === cardId)
+      const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+
+      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= cards.length) {
+        return cards
+      }
+
+      const reordered = [...cards]
+      const movedCard = reordered[currentIndex]
+      reordered[currentIndex] = reordered[targetIndex]
+      reordered[targetIndex] = movedCard
+
+      const results = await Promise.all(
+        reordered.map((card, index) =>
+          supabase
+            .from('cards')
+            .update({ sort_order: index + 1 })
+            .eq('id', card.id)
+        )
+      )
+      const failed = results.find(result => result.error)
+      if (failed?.error) throw failed.error
+
+      return reordered.map((card, index) => ({ ...card, sort_order: index + 1 }))
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cards'] }),
   })

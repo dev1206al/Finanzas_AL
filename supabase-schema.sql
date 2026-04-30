@@ -39,12 +39,14 @@ create table public.cards (
   payment_day integer not null check (payment_day between 1 and 31), -- día de pago mensual
   last_four text,  -- últimos 4 dígitos (opcional)
   is_active boolean not null default true,
+  sort_order integer not null default 0,
   created_at timestamptz default now()
 );
 
 alter table public.cards enable row level security;
 create policy "Users manage own cards" on public.cards
   for all using (auth.uid() = user_id);
+create index cards_user_sort_order on public.cards(user_id, sort_order, created_at);
 
 -- ============================================================
 -- PAYMENT DATE EXCEPTIONS (Excepciones de fecha de pago)
