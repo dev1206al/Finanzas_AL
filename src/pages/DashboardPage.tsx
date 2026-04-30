@@ -116,7 +116,7 @@ export default function DashboardPage() {
             className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 active:scale-95 transition-all text-white rounded-2xl py-3.5 font-semibold text-sm shadow-sm"
           >
             <ArrowUpRight className="w-5 h-5" />
-            Egreso
+            Débito
           </button>
           <button
             onClick={() => {
@@ -126,7 +126,7 @@ export default function DashboardPage() {
             className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 active:scale-95 transition-all text-white rounded-2xl py-3.5 font-semibold text-sm shadow-sm"
           >
             <ArrowDownLeft className="w-5 h-5" />
-            Ingreso
+            Crédito
           </button>
         </div>
 
