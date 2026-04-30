@@ -155,11 +155,11 @@ export default function MovementForm({ cardId, categories, cards, onSubmit, onCa
         {type === 'expense' ? 'Este movimiento restará del balance' : 'Este movimiento sumará al balance'}
       </div>
 
-      <div className="flex gap-2 pt-1">
+      <div className="form-actions">
         <button type="button" onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300">
           Cancelar
         </button>
-        <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium disabled:opacity-50">
+        <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium disabled:opacity-50">
           {isSubmitting ? 'Guardando…' : 'Registrar'}
         </button>
       </div>

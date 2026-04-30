@@ -1,11 +1,11 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, CreditCard, BarChart2, Wallet, Settings, TrendingUp } from 'lucide-react'
+import { LayoutDashboard, CreditCard, BarChart2, Wallet, Settings } from 'lucide-react'
 
 const navItems = [
   { to: '/',         icon: LayoutDashboard, label: 'Inicio'   },
   { to: '/tarjetas', icon: CreditCard,      label: 'Tarjetas' },
   { to: '/resumen',  icon: BarChart2,       label: 'Resumen'  },
-  { to: '/movimientos', icon: Wallet,        label: 'Movimientos' },
+  { to: '/cuentas',  icon: Wallet,          label: 'Cuentas'  },
   { to: '/ajustes',  icon: Settings,        label: 'Ajustes'  },
 ]
 
@@ -19,9 +19,7 @@ export default function AppLayout() {
                         border-r border-gray-100 dark:border-gray-800 z-40">
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-gray-100 dark:border-gray-800">
-          <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
-            <TrendingUp className="w-4.5 h-4.5 text-white w-5 h-5" />
-          </div>
+          <img src="/logo.png" alt="Finanzas AL" className="w-8 h-8 rounded-xl flex-shrink-0" />
           <span className="font-bold text-gray-900 dark:text-white text-base">Finanzas AL</span>
         </div>
 
@@ -35,7 +33,7 @@ export default function AppLayout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   isActive
-                    ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
+                    ? 'bg-violet-50 dark:bg-violet-950 text-violet-600 dark:text-violet-400'
                     : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
                 }`
               }
@@ -74,7 +72,7 @@ export default function AppLayout() {
               className={({ isActive }) =>
                 `flex-1 flex flex-col items-center gap-0.5 pt-2.5 pb-1.5 text-xs transition-colors ${
                   isActive
-                    ? 'text-indigo-600 dark:text-indigo-400'
+                    ? 'text-violet-600 dark:text-violet-400'
                     : 'text-gray-400 dark:text-gray-500'
                 }`
               }

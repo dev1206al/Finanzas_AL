@@ -20,7 +20,7 @@ export function useMovements(filter: MovementsFilter = {}) {
         .from('movements')
         .select('*, categories(*), cards(id, name, color)')
         .eq('user_id', user!.id)
-        .is('msi_parent_id', null)  // solo movimientos padre (no cuotas MSI hijas)
+        // Mostramos TODOS (padres e hijos MSI) para ver cada cuota en su mes
         .order('date', { ascending: false })
 
       if (cardId) query = query.eq('card_id', cardId)
@@ -48,21 +48,30 @@ export function useCreateMovement() {
 
   return useMutation({
     mutationFn: async (movement: Omit<Movement, 'id' | 'created_at' | 'user_id'>) => {
-      const payload = { ...movement, user_id: user!.id }
-
-      // Si es MSI, crear movimiento padre y generar cuotas
+      // MSI: el padre es la cuota 1/N, cada hijo es una cuota posterior
       if (movement.msi_months && movement.msi_months > 1) {
+        const N = movement.msi_months
+        const totalAmount = movement.amount // ya negativo (expense)
+        const installmentAmount = Number((totalAmount / N).toFixed(2))
+
+        // Padre = cuota 1/N
+        const parentPayload = {
+          ...movement,
+          amount: installmentAmount,
+          merchant: `${movement.merchant} (MSI 1/${N})`,
+          user_id: user!.id,
+        }
+
         const { data: parent, error: parentError } = await supabase
           .from('movements')
-          .insert(payload)
+          .insert(parentPayload)
           .select()
           .single()
         if (parentError) throw parentError
 
-        const installmentAmount = Number((movement.amount / movement.msi_months).toFixed(2))
+        // Hijos = cuotas 2/N … N/N en meses sucesivos
         const baseDate = new Date(movement.date)
-
-        const installments = Array.from({ length: movement.msi_months - 1 }, (_, i) => {
+        const installments = Array.from({ length: N - 1 }, (_, i) => {
           const d = new Date(baseDate)
           d.setMonth(d.getMonth() + i + 1)
           return {
@@ -70,7 +79,7 @@ export function useCreateMovement() {
             card_id: movement.card_id,
             category_id: movement.category_id,
             date: d.toISOString().slice(0, 10),
-            merchant: `${movement.merchant} (MSI ${i + 2}/${movement.msi_months})`,
+            merchant: `${movement.merchant} (MSI ${i + 2}/${N})`,
             amount: installmentAmount,
             type: 'expense' as const,
             msi_months: null,
@@ -89,7 +98,7 @@ export function useCreateMovement() {
 
       const { data, error } = await supabase
         .from('movements')
-        .insert(payload)
+        .insert({ ...movement, user_id: user!.id })
         .select()
         .single()
       if (error) throw error
@@ -121,10 +130,10 @@ export function useDeleteMovement() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      // Eliminar también cuotas MSI hijas
-      await supabase.from('movements').delete().eq('msi_parent_id', id)
-      const { error } = await supabase.from('movements').delete().eq('id', id)
+    // Siempre se pasa el ID raíz (parent). Si es un hijo MSI, pasar su msi_parent_id.
+    mutationFn: async (rootId: string) => {
+      await supabase.from('movements').delete().eq('msi_parent_id', rootId)
+      const { error } = await supabase.from('movements').delete().eq('id', rootId)
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['movements'] }),

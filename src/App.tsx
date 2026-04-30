@@ -35,8 +35,9 @@ function AppRoutes() {
         <Route path="/tarjetas" element={<CardsPage />} />
         <Route path="/tarjetas/:id" element={<CardDetailPage />} />
         <Route path="/resumen" element={<SummaryPage />} />
-        <Route path="/movimientos" element={<MovementsPage />} />
-        <Route path="/ingresos" element={<Navigate to="/movimientos" replace />} />
+        <Route path="/cuentas" element={<MovementsPage />} />
+        <Route path="/movimientos" element={<Navigate to="/cuentas" replace />} />
+        <Route path="/ingresos" element={<Navigate to="/cuentas" replace />} />
         <Route path="/ajustes" element={<SettingsPage />} />
         <Route path="/ajustes/categorias" element={<CategoriesPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

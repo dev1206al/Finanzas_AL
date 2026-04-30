@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
-import { TrendingUp } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -39,13 +38,11 @@ export default function LoginPage() {
   const inputClass = 'input'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-emerald-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-emerald-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-indigo-600 rounded-2xl mb-4 shadow-lg">
-            <TrendingUp className="w-8 h-8 text-white" />
-          </div>
+          <img src="/logo.png" alt="Finanzas AL" className="w-16 h-16 mx-auto mb-4 rounded-2xl shadow-lg" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Finanzas AL</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Control de gastos personal</p>
         </div>
@@ -58,7 +55,7 @@ export default function LoginPage() {
                 key={m}
                 onClick={() => setMode(m)}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                  mode === m ? 'bg-white dark:bg-gray-700 shadow text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
+                  mode === m ? 'bg-white dark:bg-gray-700 shadow text-violet-600 dark:text-violet-400' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 {m === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
@@ -78,7 +75,7 @@ export default function LoginPage() {
                 <input {...loginForm.register('password')} type="password" placeholder="••••••••" className={inputClass} />
                 {loginForm.formState.errors.password && <p className="text-red-500 text-xs mt-1">{loginForm.formState.errors.password.message}</p>}
               </div>
-              <button type="submit" disabled={loginForm.formState.isSubmitting} className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50">
+              <button type="submit" disabled={loginForm.formState.isSubmitting} className="w-full bg-violet-600 text-white py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50">
                 {loginForm.formState.isSubmitting ? 'Entrando...' : 'Entrar'}
               </button>
             </form>
@@ -104,7 +101,7 @@ export default function LoginPage() {
                 <input {...registerForm.register('confirmPassword')} type="password" placeholder="••••••••" className={inputClass} />
                 {registerForm.formState.errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{registerForm.formState.errors.confirmPassword.message}</p>}
               </div>
-              <button type="submit" disabled={registerForm.formState.isSubmitting} className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50">
+              <button type="submit" disabled={registerForm.formState.isSubmitting} className="w-full bg-violet-600 text-white py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50">
                 {registerForm.formState.isSubmitting ? 'Creando...' : 'Crear cuenta'}
               </button>
             </form>

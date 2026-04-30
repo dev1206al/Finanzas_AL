@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, Filter, Calendar } from 'lucide-react'
+import { ArrowLeft, Plus, Filter, Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCards } from '../hooks/useCards'
 import { useMovements, useCreateMovement, useDeleteMovement } from '../hooks/useMovements'
@@ -8,10 +8,23 @@ import { useCategories } from '../hooks/useCategories'
 import MovementForm from '../components/movements/MovementForm'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
+import SwipeRow from '../components/ui/SwipeRow'
 import { formatMXN, formatShortDate, MONTHS } from '../lib/format'
-import type { Movement } from '../types/database'
+import type { Movement, MovementWithRelations } from '../types/database'
 
 const CURRENT_YEAR = new Date().getFullYear()
+
+function groupByDate(movements: MovementWithRelations[]) {
+  const today = new Date().toISOString().slice(0, 10)
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const map = new Map<string, MovementWithRelations[]>()
+  for (const m of movements) {
+    const label = m.date === today ? 'Hoy' : m.date === yesterday ? 'Ayer' : formatShortDate(m.date)
+    if (!map.has(label)) map.set(label, [])
+    map.get(label)!.push(m)
+  }
+  return Array.from(map.entries())
+}
 
 export default function CardDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -23,7 +36,7 @@ export default function CardDetailPage() {
   const [year, setYear] = useState(CURRENT_YEAR)
   const [month, setMonth] = useState<number | undefined>(new Date().getMonth() + 1)
   const [showForm, setShowForm] = useState(false)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<{ rootId: string; isMsi: boolean } | null>(null)
 
   const { data: movements = [], isLoading } = useMovements({ year, month, cardId: id })
   const createMovement = useCreateMovement()
@@ -36,21 +49,35 @@ export default function CardDetailPage() {
   const balance = totalPayments - totalExpenses
 
   async function handleCreate(data: Omit<Movement, 'id' | 'created_at' | 'user_id'>) {
-    try { await createMovement.mutateAsync({ ...data, card_id: id! }); toast.success('Movimiento registrado'); setShowForm(false) }
-    catch { toast.error('Error al guardar') }
+    try {
+      await createMovement.mutateAsync({ ...data, card_id: id! })
+      toast.success('Movimiento registrado')
+      setShowForm(false)
+    } catch { toast.error('Error al guardar') }
   }
+
   async function handleDelete() {
     if (!deleting) return
-    try { await deleteMovement.mutateAsync(deleting); toast.success('Eliminado') }
-    catch { toast.error('Error al eliminar') }
+    try {
+      await deleteMovement.mutateAsync(deleting.rootId)
+      toast.success('Eliminado')
+    } catch { toast.error('Error al eliminar') }
     finally { setDeleting(null) }
   }
+
+  function requestDelete(m: { id: string; msi_parent_id?: string | null; msi_months?: number | null }) {
+    // Si es hijo MSI, el root es el padre; si es padre MSI, el root es él mismo
+    const rootId = m.msi_parent_id ?? m.id
+    const isMsi = !!(m.msi_parent_id || (m.msi_months && m.msi_months > 1))
+    setDeleting({ rootId, isMsi })
+  }
+
+  const groups = groupByDate(movements)
 
   return (
     <div>
       {/* ── Sticky header ── */}
       <div className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
-        {/* Barra superior con back + título + agregar */}
         <div className="flex items-center gap-2 px-4 pt-3 pb-2">
           <button onClick={() => navigate('/tarjetas')} className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0">
             <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -59,16 +86,9 @@ export default function CardDetailPage() {
             <h1 className="font-bold text-gray-900 dark:text-white truncate">{card.name}</h1>
             {card.bank && <p className="text-xs text-gray-500 dark:text-gray-400">{card.bank}</p>}
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-1 bg-indigo-600 text-white px-3 py-2 rounded-xl text-sm font-medium active:scale-95 transition-transform flex-shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            Agregar
-          </button>
         </div>
 
-        {/* Resumen de balance */}
+        {/* Totales siempre visibles */}
         <div className="mx-4 mb-3 rounded-xl p-3 text-white grid grid-cols-3 gap-2 text-center" style={{ backgroundColor: card.color }}>
           <div>
             <p className="text-white/70 text-xs">Gastos</p>
@@ -102,53 +122,73 @@ export default function CardDetailPage() {
         </div>
       </div>
 
-      {/* ── Lista de movimientos ── */}
-      <div className="px-4 py-4">
+      {/* ── Lista de movimientos agrupados por fecha ── */}
+      <div className="px-4 py-4 pb-24">
         {isLoading ? (
-          <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-16 card animate-pulse bg-gray-100 dark:bg-gray-800" />)}</div>
+          <div className="space-y-3">
+            <div className="skeleton h-4 w-16" />
+            {[1,2,3].map(i => <div key={i} className="skeleton h-16" />)}
+          </div>
         ) : movements.length === 0 ? (
           <p className="text-center text-gray-400 dark:text-gray-600 py-12 text-sm">Sin movimientos en este período</p>
         ) : (
-          <div className="space-y-2">
-            {movements.map(m => {
-              const isExpense = m.type === 'expense'
-              const cat = categories.find(c => c.id === m.category_id)
-              return (
-                <div key={m.id} className="card p-3 flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
-                    style={{ backgroundColor: cat?.color ?? '#94a3b8' }}
-                  >
-                    {(cat?.name ?? 'O').charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{m.merchant}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      <p className="text-xs text-gray-400 dark:text-gray-500">{formatShortDate(m.date)}</p>
-                      {cat && (
-                        <span className="text-xs px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: cat.color }}>
-                          {cat.name}
-                        </span>
-                      )}
-                      {m.msi_months && (
-                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400">
-                          {m.msi_months}MSI
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <p className={`text-sm font-semibold flex-shrink-0 ${isExpense ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                    {isExpense ? '-' : '+'}{formatMXN(Math.abs(m.amount))}
-                  </p>
-                  <button onClick={() => setDeleting(m.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-red-400 flex-shrink-0">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+          <div className="space-y-4">
+            {groups.map(([label, items]) => (
+              <div key={label}>
+                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">{label}</p>
+                <div className="space-y-2">
+                  {items.map(m => {
+                    const isExpense = m.type === 'expense'
+                    const cat = categories.find(c => c.id === m.category_id)
+                    const isMsiChild = !!m.msi_parent_id
+                    const isMsiParent = !!(m.msi_months && m.msi_months > 1)
+                    return (
+                      <SwipeRow key={m.id} onDelete={() => requestDelete(m)}>
+                        <div className="card p-3 flex items-center gap-3">
+                          <div
+                            className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
+                            style={{ backgroundColor: cat?.color ?? '#94a3b8' }}
+                          >
+                            {(cat?.name ?? 'O').charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{m.merchant}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              <p className="text-xs text-gray-400 dark:text-gray-500">{formatShortDate(m.date)}</p>
+                              {cat && (
+                                <span className="text-xs px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: cat.color }}>
+                                  {cat.name}
+                                </span>
+                              )}
+                              {(isMsiParent || isMsiChild) && (
+                                <span className="text-xs px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400">
+                                  MSI
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <p className={`text-sm font-semibold flex-shrink-0 ${isExpense ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                            {isExpense ? '-' : '+'}{formatMXN(Math.abs(m.amount))}
+                          </p>
+                        </div>
+                      </SwipeRow>
+                    )
+                  })}
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>
+
+      {/* ── FAB ── */}
+      <button
+        onClick={() => setShowForm(true)}
+        className="fixed bottom-24 md:bottom-8 right-4 z-40 w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform"
+        style={{ boxShadow: '0 4px 20px rgba(94,23,235,0.4)' }}
+      >
+        <Plus className="w-6 h-6" />
+      </button>
 
       {showForm && (
         <Modal title="Nuevo movimiento" onClose={() => setShowForm(false)}>
@@ -157,7 +197,9 @@ export default function CardDetailPage() {
       )}
       {deleting && (
         <ConfirmDialog
-          message="¿Eliminar este movimiento? Si tiene cuotas MSI también se eliminarán."
+          message={deleting.isMsi
+            ? 'Este movimiento es parte de un plan MSI. ¿Eliminar todas las cuotas?'
+            : '¿Eliminar este movimiento?'}
           onConfirm={handleDelete}
           onCancel={() => setDeleting(null)}
         />

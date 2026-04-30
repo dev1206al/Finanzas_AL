@@ -72,7 +72,7 @@ export default function MovementsPage() {
         <div className="px-4 pt-3 pb-2">
           {/* Título + botones */}
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Movimientos</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Cuentas</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowAccountForm(true)}
@@ -84,10 +84,10 @@ export default function MovementsPage() {
               <button
                 onClick={() => setShowMovementForm(true)}
                 disabled={accounts.length === 0}
-                className="flex items-center gap-1 bg-indigo-600 text-white px-3 py-2 rounded-xl text-sm font-medium disabled:opacity-40 active:scale-95 transition-transform"
+                className="flex items-center gap-1 bg-violet-600 text-white px-3 py-2 rounded-xl text-sm font-medium disabled:opacity-40 active:scale-95 transition-transform"
               >
                 <Plus className="w-4 h-4" />
-                Mover
+                Movimiento
               </button>
             </div>
           </div>
@@ -98,7 +98,7 @@ export default function MovementsPage() {
               <button
                 onClick={() => setSelectedAccount(undefined)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  !selectedAccount ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                  !selectedAccount ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                 }`}
               >
                 Todas

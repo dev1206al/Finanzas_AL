@@ -56,12 +56,12 @@ export default function IncomeMovementForm({ accounts, categories, onSubmit, onC
   return (
     <form onSubmit={handleSubmit(handleSubmitForm)} className="space-y-4">
       {/* Tipo */}
-      <div className="flex rounded-xl bg-gray-100 p-1">
+      <div className="flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
         {(['income', 'expense'] as const).map(t => (
           <label
             key={t}
             className={`flex-1 text-center py-2 rounded-lg text-sm font-medium cursor-pointer transition-all ${
-              type === t ? 'bg-white shadow text-indigo-600' : 'text-gray-500'
+              type === t ? 'bg-white dark:bg-gray-700 shadow text-violet-600 dark:text-violet-400' : 'text-gray-500 dark:text-gray-400'
             }`}
           >
             <input {...register('type')} type="radio" value={t} className="sr-only" />
@@ -71,7 +71,7 @@ export default function IncomeMovementForm({ accounts, categories, onSubmit, onC
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta *</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cuenta *</label>
         <select {...register('account_id')} className="input">
           {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
@@ -80,37 +80,37 @@ export default function IncomeMovementForm({ accounts, categories, onSubmit, onC
 
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Concepto *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Concepto *</label>
           <input {...register('concept')} placeholder="ej. Sueldo quincenal" className="input" />
           {errors.concept && <p className="text-red-500 text-xs mt-1">{errors.concept.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha *</label>
           <input {...register('date')} type="date" className="input" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Monto *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Monto *</label>
           <input {...register('amount', { valueAsNumber: true })} type="number" step="0.01" placeholder="0.00" className="input" />
           {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
         </div>
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
           <select {...register('category_id')} className="input">
             <option value="">Sin categoría</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
           <input {...register('notes')} placeholder="Opcional" className="input" />
         </div>
       </div>
 
-      <div className="flex gap-2 pt-1">
-        <button type="button" onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600">
+      <div className="form-actions">
+        <button type="button" onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300">
           Cancelar
         </button>
-        <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium disabled:opacity-50">
+        <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium disabled:opacity-50">
           {isSubmitting ? 'Guardando…' : 'Registrar'}
         </button>
       </div>
