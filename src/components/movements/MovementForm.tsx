@@ -20,19 +20,28 @@ interface MovementFormProps {
   cardId: string
   categories: Category[]
   cards?: Card[]
+  initial?: Pick<Movement, 'type' | 'date' | 'merchant' | 'amount' | 'category_id' | 'msi_months' | 'msi_parent_id' | 'notes'>
   onSubmit: (data: Omit<Movement, 'id' | 'created_at' | 'user_id'>) => Promise<void>
   onCancel: () => void
 }
 
 const MSI_OPTIONS = [0, 3, 6, 9, 12, 18, 24]
 
-export default function MovementForm({ cardId, categories, cards, onSubmit, onCancel }: MovementFormProps) {
+export default function MovementForm({ cardId, categories, cards, initial, onSubmit, onCancel }: MovementFormProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [selectedCardId, setSelectedCardId] = useState(cardId)
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
+    defaultValues: initial ? {
+      type: initial.type,
+      date: initial.date,
+      merchant: initial.merchant,
+      amount: Math.abs(initial.amount),
+      category_id: initial.category_id ?? '',
+      msi_months: initial.msi_months ?? 0,
+      notes: initial.notes ?? '',
+    } : {
       type: 'expense',
       date: today,
       merchant: '',
@@ -129,7 +138,7 @@ export default function MovementForm({ cardId, categories, cards, onSubmit, onCa
         </select>
       </div>
 
-      {type === 'expense' && (
+      {type === 'expense' && !initial?.msi_parent_id && !(initial?.msi_months && initial.msi_months > 1) && (
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses sin intereses</label>
           <select {...register('msi_months', { valueAsNumber: true })} className="input">
@@ -138,6 +147,11 @@ export default function MovementForm({ cardId, categories, cards, onSubmit, onCa
             ))}
           </select>
         </div>
+      )}
+      {initial && (initial.msi_parent_id || (initial.msi_months && initial.msi_months > 1)) && (
+        <p className="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2">
+          Este movimiento forma parte de un plan MSI. Solo se editará esta cuota.
+        </p>
       )}
 
       <div>

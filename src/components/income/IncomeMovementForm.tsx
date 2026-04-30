@@ -18,16 +18,25 @@ type FormData = z.infer<typeof schema>
 interface IncomeMovementFormProps {
   accounts: IncomeAccount[]
   categories: Category[]
+  initial?: Pick<IncomeMovement, 'account_id' | 'type' | 'date' | 'concept' | 'amount' | 'category_id' | 'notes'>
   onSubmit: (data: Omit<IncomeMovement, 'id' | 'created_at' | 'user_id'>) => Promise<void>
   onCancel: () => void
 }
 
-export default function IncomeMovementForm({ accounts, categories, onSubmit, onCancel }: IncomeMovementFormProps) {
+export default function IncomeMovementForm({ accounts, categories, initial, onSubmit, onCancel }: IncomeMovementFormProps) {
   const today = new Date().toISOString().slice(0, 10)
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
+    defaultValues: initial ? {
+      account_id: initial.account_id,
+      type: initial.type,
+      date: initial.date,
+      concept: initial.concept,
+      amount: Math.abs(initial.amount),
+      category_id: initial.category_id ?? '',
+      notes: initial.notes ?? '',
+    } : {
       account_id: accounts[0]?.id ?? '',
       type: 'income',
       date: today,

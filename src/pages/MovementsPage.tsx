@@ -3,10 +3,10 @@ import { Plus, Pencil, Trash2, Wallet, Filter, Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   useIncomeAccounts, useCreateIncomeAccount, useUpdateIncomeAccount, useDeleteIncomeAccount,
-  useIncomeMovements, useCreateIncomeMovement, useDeleteIncomeMovement,
+  useIncomeMovements, useCreateIncomeMovement, useUpdateIncomeMovement, useDeleteIncomeMovement,
 } from '../hooks/useIncomeAccounts'
 import { useCategories } from '../hooks/useCategories'
-import type { IncomeAccount, IncomeMovement } from '../types/database'
+import type { IncomeAccount, IncomeMovement, IncomeMovementWithRelations } from '../types/database'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import IncomeAccountForm from '../components/income/IncomeAccountForm'
@@ -29,12 +29,14 @@ export default function MovementsPage() {
 
   const { data: movements = [] } = useIncomeMovements({ year, month, accountId: selectedAccount })
   const createMovement = useCreateIncomeMovement()
+  const updateMovement = useUpdateIncomeMovement()
   const deleteMovement = useDeleteIncomeMovement()
 
   const [showAccountForm, setShowAccountForm] = useState(false)
   const [editingAccount, setEditingAccount] = useState<IncomeAccount | null>(null)
   const [deletingAccount, setDeletingAccount] = useState<IncomeAccount | null>(null)
   const [showMovementForm, setShowMovementForm] = useState(false)
+  const [editingMovement, setEditingMovement] = useState<IncomeMovementWithRelations | null>(null)
   const [deletingMovement, setDeletingMovement] = useState<string | null>(null)
 
   const totalIncome = movements.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0)
@@ -58,6 +60,11 @@ export default function MovementsPage() {
   async function handleCreateMovement(data: Omit<IncomeMovement, 'id' | 'created_at' | 'user_id'>) {
     try { await createMovement.mutateAsync(data); toast.success('Movimiento registrado'); setShowMovementForm(false) }
     catch { toast.error('Error al guardar') }
+  }
+  async function handleUpdateMovement(data: Omit<IncomeMovement, 'id' | 'created_at' | 'user_id'>) {
+    if (!editingMovement) return
+    try { await updateMovement.mutateAsync({ id: editingMovement.id, ...data }); toast.success('Movimiento actualizado'); setEditingMovement(null) }
+    catch { toast.error('Error al actualizar') }
   }
   async function handleDeleteMovement() {
     if (!deletingMovement) return
@@ -194,6 +201,9 @@ export default function MovementsPage() {
                   <p className={`text-sm font-semibold flex-shrink-0 ${isIncome ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {isIncome ? '+' : '-'}{formatMXN(Math.abs(m.amount))}
                   </p>
+                  <button onClick={() => setEditingMovement(m)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
                   <button onClick={() => setDeletingMovement(m.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-red-400">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -208,6 +218,7 @@ export default function MovementsPage() {
       {editingAccount && <Modal title="Editar cuenta" onClose={() => setEditingAccount(null)}><IncomeAccountForm initial={editingAccount} onSubmit={handleUpdateAccount} onCancel={() => setEditingAccount(null)} /></Modal>}
       {deletingAccount && <ConfirmDialog message={`¿Eliminar cuenta "${deletingAccount.name}"?`} onConfirm={handleDeleteAccount} onCancel={() => setDeletingAccount(null)} />}
       {showMovementForm && <Modal title="Nuevo movimiento" onClose={() => setShowMovementForm(false)}><IncomeMovementForm accounts={accounts} categories={categories} onSubmit={handleCreateMovement} onCancel={() => setShowMovementForm(false)} /></Modal>}
+      {editingMovement && <Modal title="Editar movimiento" onClose={() => setEditingMovement(null)}><IncomeMovementForm accounts={accounts} categories={categories} initial={editingMovement} onSubmit={handleUpdateMovement} onCancel={() => setEditingMovement(null)} /></Modal>}
       {deletingMovement && <ConfirmDialog message="¿Eliminar este movimiento?" onConfirm={handleDeleteMovement} onCancel={() => setDeletingMovement(null)} />}
     </div>
   )

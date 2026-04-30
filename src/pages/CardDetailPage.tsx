@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Filter, Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCards } from '../hooks/useCards'
-import { useMovements, useCreateMovement, useDeleteMovement } from '../hooks/useMovements'
+import { useMovements, useCreateMovement, useUpdateMovement, useDeleteMovement } from '../hooks/useMovements'
 import { useCategories } from '../hooks/useCategories'
 import MovementForm from '../components/movements/MovementForm'
 import Modal from '../components/ui/Modal'
@@ -37,10 +37,12 @@ export default function CardDetailPage() {
   const [year, setYear] = useState(CURRENT_YEAR)
   const [month, setMonth] = useState<number | undefined>(new Date().getMonth() + 1)
   const [showForm, setShowForm] = useState(false)
+  const [editingMovement, setEditingMovement] = useState<MovementWithRelations | null>(null)
   const [deleting, setDeleting] = useState<{ rootId: string; isMsi: boolean } | null>(null)
 
   const { data: movements = [], isLoading } = useMovements({ year, month, cardId: id })
   const createMovement = useCreateMovement()
+  const updateMovement = useUpdateMovement()
   const deleteMovement = useDeleteMovement()
 
   if (!card) return null
@@ -55,6 +57,15 @@ export default function CardDetailPage() {
       toast.success('Movimiento registrado')
       setShowForm(false)
     } catch { toast.error('Error al guardar') }
+  }
+
+  async function handleUpdate(data: Omit<Movement, 'id' | 'created_at' | 'user_id'>) {
+    if (!editingMovement) return
+    try {
+      await updateMovement.mutateAsync({ id: editingMovement.id, ...data })
+      toast.success('Movimiento actualizado')
+      setEditingMovement(null)
+    } catch { toast.error('Error al actualizar') }
   }
 
   async function handleDelete() {
@@ -147,7 +158,10 @@ export default function CardDetailPage() {
                     const isMsiParent = !!(m.msi_months && m.msi_months > 1)
                     return (
                       <SwipeRow key={m.id} onDelete={() => requestDelete(m)}>
-                        <div className="card p-3 flex items-center gap-3">
+                        <div
+                          className="card p-3 flex items-center gap-3 cursor-pointer active:bg-gray-50 dark:active:bg-gray-800 transition-colors"
+                          onClick={() => setEditingMovement(m)}
+                        >
                           <div
                             className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
                             style={{ backgroundColor: cat?.color ?? '#94a3b8' }}
@@ -196,6 +210,17 @@ export default function CardDetailPage() {
       {showForm && (
         <Modal title="Nuevo movimiento" onClose={() => setShowForm(false)}>
           <MovementForm cardId={id!} categories={categories} onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
+        </Modal>
+      )}
+      {editingMovement && (
+        <Modal title="Editar movimiento" onClose={() => setEditingMovement(null)}>
+          <MovementForm
+            cardId={editingMovement.card_id}
+            categories={categories}
+            initial={editingMovement}
+            onSubmit={handleUpdate}
+            onCancel={() => setEditingMovement(null)}
+          />
         </Modal>
       )}
       {deleting && (

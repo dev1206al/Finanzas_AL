@@ -120,6 +120,24 @@ export function useCreateIncomeMovement() {
   })
 }
 
+export function useUpdateIncomeMovement() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<IncomeMovement> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('income_movements')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['income_movements'] }),
+  })
+}
+
 export function useDeleteIncomeMovement() {
   const qc = useQueryClient()
 
