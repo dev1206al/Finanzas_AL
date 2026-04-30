@@ -12,6 +12,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog'
 import IncomeAccountForm from '../components/income/IncomeAccountForm'
 import IncomeMovementForm from '../components/income/IncomeMovementForm'
 import { formatMXN, formatShortDate, MONTHS } from '../lib/format'
+import PageHeader from '../components/ui/PageHeader'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -68,8 +69,8 @@ export default function MovementsPage() {
   return (
     <div>
       {/* ── Sticky header ── */}
-      <div className="safe-header sticky top-0 z-30 bg-gray-50 dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
-        <div className="px-4 pt-3 pb-2">
+      <PageHeader>
+        <div className="px-4 pt-2 pb-2">
           {/* Título + botones */}
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">Cuentas</h1>
@@ -154,7 +155,7 @@ export default function MovementsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* ── Lista de movimientos ── */}
       <div className="px-4 py-4">

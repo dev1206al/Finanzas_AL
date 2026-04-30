@@ -4,36 +4,48 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Prevenir zoom y comportamiento web en móvil ── */
-* {
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+/* ── Variables globales ── */
+@layer base {
+  :root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --nav-h: 4rem;               /* altura del bottom nav */
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  html {
+    overscroll-behavior: none;
+  }
+
+  body {
+    @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased;
+    -webkit-user-select: none;
+    user-select: none;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  input, textarea, select, [contenteditable] {
+    -webkit-user-select: auto;
+    user-select: auto;
+    /* Previene zoom en iOS (requiere >= 16px) */
+    font-size: 16px !important;
+  }
+
+  #root {
+    min-height: 100dvh;
+  }
+
+  button, a, [role='button'] {
+    touch-action: manipulation;
+  }
 }
 
-html {
-  overscroll-behavior: none;
-}
-
-body {
-  @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-input, textarea, select, [contenteditable] {
-  -webkit-user-select: auto;
-  user-select: auto;
-}
-
-#root {
-  @apply min-h-screen;
-}
-
-.scroll-container {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
+/* ── Componentes reutilizables ── */
 @layer components {
   .input {
     @apply w-full px-3 py-2.5 border border-gray-300 dark:border-gray-700
@@ -41,50 +53,37 @@ input, textarea, select, [contenteditable] {
            bg-white dark:bg-gray-800
            focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent
            placeholder:text-gray-400 dark:placeholder:text-gray-500;
-    /* font-size >= 16px previene zoom al enfocar en iOS */
-    font-size: 16px;
-  }
-
-  /* Inputs de tipo select también deben tener 16px */
-  select.input {
-    font-size: 16px;
-  }
-
-  .btn-primary {
-    @apply bg-violet-600 hover:bg-violet-700 text-white font-medium
-           rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-           active:scale-95;
-  }
-
-  .btn-secondary {
-    @apply border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300
-           font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors;
   }
 
   .card {
     @apply bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800;
   }
 
-  .page-header {
-    @apply sticky top-0 z-30
-           bg-gray-50 dark:bg-gray-950
-           border-b border-gray-100 dark:border-gray-800
-           px-4 pb-3;
-    /* El fondo cubre el Dynamic Island; el contenido arranca debajo */
-    padding-top: max(env(safe-area-inset-top, 0px), 12px);
-  }
-
-  /* Para sticky headers que no usan .page-header pero necesitan el mismo tratamiento */
-  .safe-header {
-    padding-top: max(env(safe-area-inset-top, 0px), 0px);
-  }
-
-  /* Botones de formularios: siempre visibles al fondo del scroll */
+  /* Botones de formulario: sticky al fondo del scroll del modal */
   .form-actions {
     @apply sticky bottom-0 bg-white dark:bg-gray-900 pt-3 pb-1 flex gap-2;
-    margin-left: -1px;
-    margin-right: -1px;
   }
+}
+
+/* ── Utilidades ── */
+@layer utilities {
+  /* Padding inferior para que el contenido no quede bajo el bottom nav */
+  .pb-nav {
+    padding-bottom: calc(var(--nav-h) + var(--sab) + 1.5rem);
+  }
+
+  /* FAB encima del bottom nav con safe area */
+  .fab-position {
+    bottom: calc(var(--nav-h) + var(--sab) + 0.75rem);
+  }
+  @media (min-width: 768px) {
+    .fab-position {
+      bottom: 2rem;
+    }
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
 /* ── Safe area para notch/Dynamic Island ── */
@@ -92,17 +91,49 @@ input, textarea, select, [contenteditable] {
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
 }
 
-.safe-area-pt {
-  padding-top: env(safe-area-inset-top, 0px);
+/* ── Skeleton shimmer animado ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    theme('colors.gray.200') 25%,
+    theme('colors.gray.100') 50%,
+    theme('colors.gray.200') 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    theme('colors.gray.800') 25%,
+    theme('colors.gray.700') 50%,
+    theme('colors.gray.800') 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
 }
 
-/* ── Scrollbar invisible ── */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+/* ── Animaciones ── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
 
-/* ── Skeleton loader ── */
-.skeleton {
-  @apply bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse;
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.18s ease-out;
 }
 
 /* ── Swipe row ── */
@@ -126,4 +157,10 @@ input, textarea, select, [contenteditable] {
   justify-content: center;
   background-color: #ef4444;
   border-radius: 0 1rem 1rem 0;
+}
+
+/* Active feedback global */
+button:not(:disabled):active,
+a:active {
+  opacity: 0.75;
 }

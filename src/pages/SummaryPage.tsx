@@ -4,6 +4,7 @@ import { useMovements } from '../hooks/useMovements'
 import { useCards } from '../hooks/useCards'
 import { useCategories } from '../hooks/useCategories'
 import { formatMXN, MONTHS } from '../lib/format'
+import PageHeader from '../components/ui/PageHeader'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -57,8 +58,8 @@ export default function SummaryPage() {
   return (
     <div>
       {/* ── Sticky header con filtros y totales ── */}
-      <div className="safe-header sticky top-0 z-30 bg-gray-50 dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
-        <div className="px-4 pt-3 pb-2">
+      <PageHeader>
+        <div className="px-4 pt-2 pb-2">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Resumen</h1>
 
           {/* Filtros */}
@@ -130,7 +131,7 @@ export default function SummaryPage() {
             ))}
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* ── Contenido según vista ── */}
       <div className="px-4 py-4 space-y-2">

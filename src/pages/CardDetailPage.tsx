@@ -9,6 +9,7 @@ import MovementForm from '../components/movements/MovementForm'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import SwipeRow from '../components/ui/SwipeRow'
+import PageHeader from '../components/ui/PageHeader'
 import { formatMXN, formatShortDate, MONTHS } from '../lib/format'
 import type { Movement, MovementWithRelations } from '../types/database'
 
@@ -76,8 +77,7 @@ export default function CardDetailPage() {
 
   return (
     <div>
-      {/* ── Sticky header ── */}
-      <div className="safe-header sticky top-0 z-30 bg-gray-50 dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
+      <PageHeader>
         <div className="flex items-center gap-2 px-4 pt-3 pb-2">
           <button onClick={() => navigate('/tarjetas')} className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0">
             <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -123,10 +123,10 @@ export default function CardDetailPage() {
             </select>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* ── Lista de movimientos agrupados por fecha ── */}
-      <div className="px-4 py-4 pb-24">
+      <div className="px-4 py-4 pb-16">
         {isLoading ? (
           <div className="space-y-3">
             <div className="skeleton h-4 w-16" />
@@ -187,7 +187,7 @@ export default function CardDetailPage() {
       {/* ── FAB ── */}
       <button
         onClick={() => setShowForm(true)}
-        className="fixed bottom-24 md:bottom-8 right-4 z-40 w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform"
+        className="fixed fab-position right-4 z-40 w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform"
         style={{ boxShadow: '0 4px 20px rgba(94,23,235,0.4)' }}
       >
         <Plus className="w-6 h-6" />

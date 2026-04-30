@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
+import { useSwipeDown } from '../../hooks/useSwipeDown'
 
 interface ModalProps {
   title: string
@@ -8,14 +9,13 @@ interface ModalProps {
 }
 
 export default function Modal({ title, onClose, children }: ModalProps) {
+  const { panelRef, handleRef } = useSwipeDown(onClose)
+
   useEffect(() => {
-    // Bloquea el scroll del fondo mientras el modal está abierto
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
-
     return () => {
       document.body.style.overflow = prev
       document.removeEventListener('keydown', handler)
@@ -24,17 +24,29 @@ export default function Modal({ title, onClose, children }: ModalProps) {
 
   return (
     /*
-      z-[60] > z-50 del bottom nav → el modal siempre queda encima.
-      items-end en móvil: sube desde abajo como sheet nativo.
+      z-[60] > z-50 del bottom nav → siempre encima.
+      Móvil: bottom-sheet desde abajo. Desktop: modal centrado.
     */
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center animate-fade-in">
       <div className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className="relative bg-white dark:bg-gray-900 w-full max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 flex flex-col"
+        ref={panelRef}
+        className="relative bg-white dark:bg-gray-900 w-full max-w-md
+                   rounded-t-2xl sm:rounded-2xl shadow-2xl
+                   border border-gray-100 dark:border-gray-800
+                   flex flex-col animate-slide-up sm:animate-none"
         style={{ maxHeight: 'min(88dvh, 88vh)' }}
       >
-        {/* Cabecera fija */}
+        {/* Drag handle — solo visible en móvil para indicar que se puede arrastrar */}
+        <div
+          ref={handleRef}
+          className="sm:hidden flex justify-center pt-3 pb-1 flex-shrink-0 touch-none cursor-grab"
+        >
+          <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+        </div>
+
+        {/* Título */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
           <h2 className="font-semibold text-gray-900 dark:text-white">{title}</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -42,12 +54,11 @@ export default function Modal({ title, onClose, children }: ModalProps) {
           </button>
         </div>
 
-        {/* Contenido scrolleable — padding inferior cubre el safe area en iPhone */}
-        <div
-          className="overflow-y-auto flex-1 p-4"
-          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
-        >
+        {/* Contenido scrolleable con overscroll-contain para no botar el fondo */}
+        <div className="overflow-y-auto flex-1 p-4 overscroll-contain">
           {children}
+          {/* Spacer final para el home indicator de iPhone */}
+          <div aria-hidden style={{ height: 'env(safe-area-inset-bottom, 0px)' }} className="sm:hidden" />
         </div>
       </div>
     </div>

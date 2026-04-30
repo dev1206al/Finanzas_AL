@@ -9,6 +9,7 @@ import { useCategories } from '../hooks/useCategories'
 import { useAuth } from '../context/AuthContext'
 import { formatMXN, formatShortDate, MONTHS } from '../lib/format'
 import Modal from '../components/ui/Modal'
+import PageHeader from '../components/ui/PageHeader'
 import MovementForm from '../components/movements/MovementForm'
 import IncomeMovementForm from '../components/income/IncomeMovementForm'
 import type { Movement, IncomeMovement } from '../types/database'
@@ -93,16 +94,15 @@ export default function DashboardPage() {
 
   return (
     <div>
-      {/* ── Sticky header ── */}
-      <div className="page-header">
+      <PageHeader>
         <p className="text-xs text-gray-500 dark:text-gray-400">{greeting},</p>
         <div className="flex items-end justify-between">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{name}</h1>
           <p className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{MONTHS[MONTH - 1]} {YEAR}</p>
         </div>
-      </div>
+      </PageHeader>
 
-      <div className="px-4 py-4 space-y-5 pb-24">
+      <div className="px-4 py-4 space-y-5 pb-20">
 
         {/* ── Botones de acción rápida ── */}
         <div className="grid grid-cols-2 gap-3">
@@ -260,7 +260,7 @@ export default function DashboardPage() {
           if (cards.length === 0) { toast.error('Primero agrega una tarjeta'); return }
           setQuickAdd('expense')
         }}
-        className="fixed bottom-24 md:bottom-8 right-4 z-40 w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform"
+        className="fixed fab-position right-4 z-40 w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform"
         style={{ boxShadow: '0 4px 20px rgba(94,23,235,0.4)' }}
       >
         <Plus className="w-6 h-6" />

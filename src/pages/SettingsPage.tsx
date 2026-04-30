@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext'
 import { supabase } from '../lib/supabase'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import Modal from '../components/ui/Modal'
+import PageHeader from '../components/ui/PageHeader'
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth()
@@ -44,9 +45,9 @@ export default function SettingsPage() {
   return (
     <div>
       {/* ── Sticky header ── */}
-      <div className="page-header">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Ajustes</h1>
-      </div>
+      <PageHeader>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white py-1">Ajustes</h1>
+      </PageHeader>
 
       <div className="px-4 py-4 space-y-4">
         {/* Perfil */}

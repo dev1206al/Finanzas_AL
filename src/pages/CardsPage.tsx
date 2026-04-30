@@ -8,6 +8,7 @@ import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import CardForm, { type CardFormData } from '../components/cards/CardForm'
 import { formatMXN } from '../lib/format'
+import PageHeader from '../components/ui/PageHeader'
 
 export default function CardsPage() {
   const navigate = useNavigate()
@@ -57,17 +58,18 @@ export default function CardsPage() {
 
   return (
     <div>
-      {/* ── Sticky header ── */}
-      <div className="page-header flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Tarjetas</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 bg-indigo-600 text-white px-3 py-2 rounded-xl text-sm font-medium active:scale-95 transition-transform"
-        >
-          <Plus className="w-4 h-4" />
-          Agregar
-        </button>
-      </div>
+      <PageHeader>
+        <div className="flex items-center justify-between py-1">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Tarjetas</h1>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 bg-violet-600 text-white px-3 py-2 rounded-xl text-sm font-medium active:scale-95 transition-transform"
+          >
+            <Plus className="w-4 h-4" />
+            Agregar
+          </button>
+        </div>
+      </PageHeader>
 
       {/* ── Contenido ── */}
       <div className="px-4 py-4">

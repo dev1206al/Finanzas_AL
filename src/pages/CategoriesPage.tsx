@@ -7,6 +7,7 @@ import type { Category } from '../types/database'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import CategoryForm from '../components/categories/CategoryForm'
+import PageHeader from '../components/ui/PageHeader'
 
 const TYPE_LABELS: Record<Category['type'], string> = {
   expense: 'Gasto', lent: 'Prestado', income: 'Ingreso',
@@ -47,20 +48,21 @@ export default function CategoriesPage() {
 
   return (
     <div>
-      {/* ── Sticky header ── */}
-      <div className="page-header flex items-center gap-3">
-        <button onClick={() => navigate('/ajustes')} className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        </button>
-        <h1 className="flex-1 text-xl font-bold text-gray-900 dark:text-white">Categorías</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 bg-indigo-600 text-white px-3 py-2 rounded-xl text-sm font-medium active:scale-95 transition-transform"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva
-        </button>
-      </div>
+      <PageHeader>
+        <div className="flex items-center gap-3 py-1">
+          <button onClick={() => navigate('/ajustes')} className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+          <h1 className="flex-1 text-xl font-bold text-gray-900 dark:text-white">Categorías</h1>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 bg-violet-600 text-white px-3 py-2 rounded-xl text-sm font-medium active:scale-95 transition-transform"
+          >
+            <Plus className="w-4 h-4" />
+            Nueva
+          </button>
+        </div>
+      </PageHeader>
 
       <div className="px-4 py-4">
         {isLoading ? (
