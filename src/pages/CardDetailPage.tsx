@@ -42,23 +42,33 @@ export default function CardDetailPage() {
   const [deleting, setDeleting] = useState<{ rootId: string; isMsi: boolean } | null>(null)
 
   const periods = useMemo(() => card ? getPeriods(card.cut_day) : [], [card?.cut_day])
-  const period = periods[periodIdx]
+  // periodIdx === -1 → "Todo el historial"
+  const period = periodIdx >= 0 ? periods[periodIdx] : undefined
 
+  // Movimientos del período seleccionado (para la lista y Gastos/Pagos del período)
   const { data: movements = [], isLoading } = useMovements({
     cardId: id,
     dateFrom: period?.start,
     dateTo: period?.end,
   })
+
+  // Todos los movimientos de la tarjeta (para Balance y Disponible reales)
+  const { data: allMovements = [] } = useMovements({ cardId: id })
+
   const createMovement = useCreateMovement()
   const updateMovement = useUpdateMovement()
   const deleteMovement = useDeleteMovement()
 
   if (!card) return null
 
-  // Totales del período completo (sin filtros de tipo/categoría)
+  // Gastos/Pagos del período seleccionado
   const totalExpenses = movements.filter(m => m.type === 'expense').reduce((s, m) => s + Math.abs(m.amount), 0)
   const totalPayments = movements.filter(m => m.type === 'payment' || m.type === 'income').reduce((s, m) => s + m.amount, 0)
-  const balance = totalPayments - totalExpenses
+
+  // Balance y Disponible siempre basados en el historial completo de la tarjeta
+  const allExpenses = allMovements.filter(m => m.type === 'expense').reduce((s, m) => s + Math.abs(m.amount), 0)
+  const allPayments = allMovements.filter(m => m.type === 'payment' || m.type === 'income').reduce((s, m) => s + m.amount, 0)
+  const balance = allPayments - allExpenses
 
   // Categorías presentes en el período
   const periodCategories = useMemo(() => {
@@ -125,15 +135,15 @@ export default function CardDetailPage() {
         {/* Totales siempre visibles */}
         <div className="mx-4 mb-3 rounded-xl p-3 text-white grid grid-cols-2 gap-x-4 gap-y-3 text-center" style={{ backgroundColor: card.color }}>
           <div>
-            <p className="text-white/70 text-xs">Gastos</p>
+            <p className="text-white/70 text-xs">Gastos período</p>
             <p className="font-bold text-sm">{formatMXN(totalExpenses)}</p>
           </div>
           <div>
-            <p className="text-white/70 text-xs">Pagos</p>
+            <p className="text-white/70 text-xs">Pagos período</p>
             <p className="font-bold text-sm">{formatMXN(totalPayments)}</p>
           </div>
           <div>
-            <p className="text-white/70 text-xs mb-1">Balance</p>
+            <p className="text-white/70 text-xs mb-1">Balance total</p>
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full text-white ${balance >= 0 ? 'bg-black/25' : 'bg-black/35'}`}>
               {balance >= 0 ? '+' : ''}{formatMXN(balance)}
             </span>
@@ -141,15 +151,9 @@ export default function CardDetailPage() {
           {card.credit_limit > 0 && (
             <div>
               <p className="text-white/70 text-xs mb-1">Disponible</p>
-              {(() => {
-                const debt = totalExpenses - totalPayments
-                const disponible = card.credit_limit - debt
-                return (
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full text-white ${disponible >= 0 ? 'bg-black/25' : 'bg-black/35'}`}>
-                    {formatMXN(Math.max(disponible, 0))}
-                  </span>
-                )
-              })()}
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full text-white bg-black/25`}>
+                {formatMXN(Math.max(card.credit_limit - (allExpenses - allPayments), 0))}
+              </span>
             </div>
           )}
         </div>
@@ -161,6 +165,7 @@ export default function CardDetailPage() {
             onChange={e => { setPeriodIdx(Number(e.target.value)); setTypeFilter('all'); setCatFilter('') }}
             className="w-full text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-200 outline-none"
           >
+            <option value={-1}>Todo el historial</option>
             {periods.map((p, i) => (
               <option key={p.start} value={i}>{i === 0 ? `Período actual · ${p.label}` : p.label}</option>
             ))}
