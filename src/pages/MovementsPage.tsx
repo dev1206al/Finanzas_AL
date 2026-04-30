@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Plus, Pencil, Trash2, Wallet, Filter, Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
@@ -37,7 +37,8 @@ export default function MovementsPage() {
   const [deletingAccount, setDeletingAccount] = useState<IncomeAccount | null>(null)
   const [showMovementForm, setShowMovementForm] = useState(false)
   const [editingMovement, setEditingMovement] = useState<IncomeMovementWithRelations | null>(null)
-  const [deletingMovement, setDeletingMovement] = useState<string | null>(null)
+  const [hiddenMovIds, setHiddenMovIds] = useState<Set<string>>(new Set())
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const totalIncome = movements.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0)
   const totalExpense = movements.filter(m => m.type === 'expense').reduce((s, m) => s + Math.abs(m.amount), 0)
@@ -66,11 +67,35 @@ export default function MovementsPage() {
     try { await updateMovement.mutateAsync({ id: editingMovement.id, ...data }); toast.success('Movimiento actualizado'); setEditingMovement(null) }
     catch { toast.error('Error al actualizar') }
   }
-  async function handleDeleteMovement() {
-    if (!deletingMovement) return
-    try { await deleteMovement.mutateAsync(deletingMovement); toast.success('Eliminado') }
-    catch { toast.error('Error al eliminar') }
-    finally { setDeletingMovement(null) }
+  function handleDeleteMovement(movId: string) {
+    setHiddenMovIds(prev => new Set(prev).add(movId))
+    if (undoTimer.current) clearTimeout(undoTimer.current)
+
+    const tid = toast.custom(t => (
+      <div className={`flex items-center gap-3 bg-gray-900 text-white px-4 py-3 rounded-2xl shadow-xl transition-opacity ${t.visible ? 'opacity-100' : 'opacity-0'}`}>
+        <span className="text-sm flex-1">Movimiento eliminado</span>
+        <button
+          className="text-violet-400 font-semibold text-sm shrink-0"
+          onClick={() => {
+            toast.dismiss(tid)
+            clearTimeout(undoTimer.current!)
+            setHiddenMovIds(prev => { const n = new Set(prev); n.delete(movId); return n })
+          }}
+        >
+          Deshacer
+        </button>
+      </div>
+    ), { duration: 4000 })
+
+    undoTimer.current = setTimeout(async () => {
+      try {
+        await deleteMovement.mutateAsync(movId)
+        setHiddenMovIds(prev => { const n = new Set(prev); n.delete(movId); return n })
+      } catch {
+        toast.error('Error al eliminar')
+        setHiddenMovIds(prev => { const n = new Set(prev); n.delete(movId); return n })
+      }
+    }, 4000)
   }
 
   return (
@@ -169,14 +194,29 @@ export default function MovementsPage() {
         {accounts.length === 0 ? (
           <div className="text-center py-16 text-gray-400 dark:text-gray-600">
             <Wallet className="w-12 h-12 mx-auto mb-3 opacity-40" />
-            <p className="font-medium">Sin cuentas</p>
-            <p className="text-sm mt-1">Agrega una cuenta de nómina, débito o ahorro</p>
+            <p className="font-medium mb-4">Sin cuentas</p>
+            <button
+              onClick={() => setShowAccountForm(true)}
+              className="inline-flex items-center gap-2 bg-violet-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium active:scale-95 transition-transform"
+            >
+              <Plus className="w-4 h-4" />
+              Agregar cuenta
+            </button>
           </div>
-        ) : movements.length === 0 ? (
-          <p className="text-center text-gray-400 dark:text-gray-600 py-8 text-sm">Sin movimientos en este período</p>
+        ) : movements.filter(m => !hiddenMovIds.has(m.id)).length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-400 dark:text-gray-600 text-sm mb-4">Sin movimientos en este período</p>
+            <button
+              onClick={() => setShowMovementForm(true)}
+              className="inline-flex items-center gap-2 bg-violet-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium active:scale-95 transition-transform"
+            >
+              <Plus className="w-4 h-4" />
+              Agregar movimiento
+            </button>
+          </div>
         ) : (
           <div className="space-y-2">
-            {movements.map(m => {
+            {movements.filter(m => !hiddenMovIds.has(m.id)).map(m => {
               const isIncome = m.type === 'income'
               const cat = categories.find(c => c.id === m.category_id)
               const acc = accounts.find(a => a.id === m.account_id)
@@ -193,7 +233,7 @@ export default function MovementsPage() {
                       {acc && <span className="text-xs text-gray-400 dark:text-gray-500">· {acc.name}</span>}
                       {cat && (
                         <span className="text-xs px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: cat.color }}>
-                          {cat.name}
+                          {cat.icon ? `${cat.icon} ` : ''}{cat.name}
                         </span>
                       )}
                     </div>
@@ -204,7 +244,7 @@ export default function MovementsPage() {
                   <button onClick={() => setEditingMovement(m)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => setDeletingMovement(m.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-red-400">
+                  <button onClick={() => handleDeleteMovement(m.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-red-400">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -219,7 +259,6 @@ export default function MovementsPage() {
       {deletingAccount && <ConfirmDialog message={`¿Eliminar cuenta "${deletingAccount.name}"?`} onConfirm={handleDeleteAccount} onCancel={() => setDeletingAccount(null)} />}
       {showMovementForm && <Modal title="Nuevo movimiento" onClose={() => setShowMovementForm(false)}><IncomeMovementForm accounts={accounts} categories={categories} onSubmit={handleCreateMovement} onCancel={() => setShowMovementForm(false)} /></Modal>}
       {editingMovement && <Modal title="Editar movimiento" onClose={() => setEditingMovement(null)}><IncomeMovementForm accounts={accounts} categories={categories} initial={editingMovement} onSubmit={handleUpdateMovement} onCancel={() => setEditingMovement(null)} /></Modal>}
-      {deletingMovement && <ConfirmDialog message="¿Eliminar este movimiento?" onConfirm={handleDeleteMovement} onCancel={() => setDeletingMovement(null)} />}
     </div>
   )
 }

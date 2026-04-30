@@ -142,9 +142,12 @@ export default function SummaryPage() {
             ) : byCategory.map(({ category, byCard: cardMap, total, isLent }) => (
               <div key={category.id} className="card overflow-hidden">
                 <div className="flex items-center gap-3 p-3">
-                  <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
+                  <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-bold"
                     style={{ backgroundColor: category.color }}>
-                    {category.name.charAt(0)}
+                    {category.icon
+                      ? <span className="text-base">{category.icon}</span>
+                      : <span className="text-white">{category.name.charAt(0)}</span>
+                    }
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">

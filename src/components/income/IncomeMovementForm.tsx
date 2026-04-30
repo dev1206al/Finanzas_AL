@@ -100,7 +100,7 @@ export default function IncomeMovementForm({ accounts, categories, initial, onSu
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Monto *</label>
-        <input {...register('amount', { valueAsNumber: true })} type="number" step="0.01" placeholder="0.00" className="input" />
+        <input {...register('amount', { valueAsNumber: true })} type="number" inputMode="decimal" step="0.01" placeholder="0.00" className="input" />
         {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
       </div>
 

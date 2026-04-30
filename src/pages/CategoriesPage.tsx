@@ -85,7 +85,12 @@ export default function CategoriesPage() {
                   <div className="space-y-1.5">
                     {cats.map(cat => (
                       <div key={cat.id} className="card px-3 py-2.5 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                        <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-lg" style={{ backgroundColor: cat.color }}>
+                          {cat.icon
+                            ? <span>{cat.icon}</span>
+                            : <span className="text-white text-xs font-bold">{cat.name.charAt(0)}</span>
+                          }
+                        </div>
                         <span className="flex-1 text-sm font-medium text-gray-900 dark:text-white">{cat.name}</span>
                         <button onClick={() => setEditing(cat)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400">
                           <Pencil className="w-3.5 h-3.5" />

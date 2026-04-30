@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -7,7 +7,6 @@ import { useMovements, useCreateMovement, useUpdateMovement, useDeleteMovement }
 import { useCategories } from '../hooks/useCategories'
 import MovementForm from '../components/movements/MovementForm'
 import Modal from '../components/ui/Modal'
-import ConfirmDialog from '../components/ui/ConfirmDialog'
 import SwipeRow from '../components/ui/SwipeRow'
 import PageHeader from '../components/ui/PageHeader'
 import { formatMXN, formatShortDate, getPeriods } from '../lib/format'
@@ -39,7 +38,8 @@ export default function CardDetailPage() {
   const [catFilter, setCatFilter] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingMovement, setEditingMovement] = useState<MovementWithRelations | null>(null)
-  const [deleting, setDeleting] = useState<{ rootId: string; isMsi: boolean } | null>(null)
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const periods = useMemo(() => card ? getPeriods(card.cut_day) : [], [card?.cut_day])
   // periodIdx === -1 → "Todo el historial"
@@ -76,14 +76,16 @@ export default function CardDetailPage() {
     return categories.filter(c => ids.has(c.id))
   }, [movements, categories])
 
-  // Lista filtrada por tipo y categoría
+  // Lista filtrada por tipo, categoría y pending-delete
   const filtered = useMemo(() => movements.filter(m => {
+    if (hiddenIds.has(m.id)) return false
+    if (m.msi_parent_id && hiddenIds.has(m.msi_parent_id)) return false
     if (typeFilter === 'expense' && m.type !== 'expense') return false
     if (typeFilter === 'payment' && m.type !== 'payment' && m.type !== 'income') return false
     if (typeFilter === 'msi' && !m.msi_parent_id && !(m.msi_months && m.msi_months > 1)) return false
     if (catFilter && m.category_id !== catFilter) return false
     return true
-  }), [movements, typeFilter, catFilter])
+  }), [movements, typeFilter, catFilter, hiddenIds])
 
   async function handleCreate(data: Omit<Movement, 'id' | 'created_at' | 'user_id'>) {
     try {
@@ -102,19 +104,41 @@ export default function CardDetailPage() {
     } catch { toast.error('Error al actualizar') }
   }
 
-  async function handleDelete() {
-    if (!deleting) return
-    try {
-      await deleteMovement.mutateAsync(deleting.rootId)
-      toast.success('Eliminado')
-    } catch { toast.error('Error al eliminar') }
-    finally { setDeleting(null) }
-  }
-
   function requestDelete(m: { id: string; msi_parent_id?: string | null; msi_months?: number | null }) {
     const rootId = m.msi_parent_id ?? m.id
     const isMsi = !!(m.msi_parent_id || (m.msi_months && m.msi_months > 1))
-    setDeleting({ rootId, isMsi })
+
+    // Ocultar inmediatamente (undo optimista)
+    setHiddenIds(prev => new Set(prev).add(rootId))
+    if (undoTimer.current) clearTimeout(undoTimer.current)
+
+    const tid = toast.custom(t => (
+      <div className={`flex items-center gap-3 bg-gray-900 text-white px-4 py-3 rounded-2xl shadow-xl transition-opacity ${t.visible ? 'opacity-100' : 'opacity-0'}`}>
+        <span className="text-sm flex-1">
+          {isMsi ? 'Plan MSI eliminado' : 'Movimiento eliminado'}
+        </span>
+        <button
+          className="text-violet-400 font-semibold text-sm shrink-0"
+          onClick={() => {
+            toast.dismiss(tid)
+            clearTimeout(undoTimer.current!)
+            setHiddenIds(prev => { const n = new Set(prev); n.delete(rootId); return n })
+          }}
+        >
+          Deshacer
+        </button>
+      </div>
+    ), { duration: 4000 })
+
+    undoTimer.current = setTimeout(async () => {
+      try {
+        await deleteMovement.mutateAsync(rootId)
+        setHiddenIds(prev => { const n = new Set(prev); n.delete(rootId); return n })
+      } catch {
+        toast.error('Error al eliminar')
+        setHiddenIds(prev => { const n = new Set(prev); n.delete(rootId); return n })
+      }
+    }, 4000)
   }
 
   const groups = groupByDate(filtered)
@@ -217,7 +241,16 @@ export default function CardDetailPage() {
             {[1,2,3].map(i => <div key={i} className="skeleton h-16" />)}
           </div>
         ) : movements.length === 0 ? (
-          <p className="text-center text-gray-400 dark:text-gray-600 py-12 text-sm">Sin movimientos en este período</p>
+          <div className="text-center py-16">
+            <p className="text-gray-400 dark:text-gray-600 text-sm mb-4">Sin movimientos en este período</p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-2 bg-violet-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium active:scale-95 transition-transform"
+            >
+              <Plus className="w-4 h-4" />
+              Agregar movimiento
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
             {groups.map(([label, items]) => (
@@ -236,10 +269,13 @@ export default function CardDetailPage() {
                           onClick={() => setEditingMovement(m)}
                         >
                           <div
-                            className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
+                            className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-xs font-bold"
                             style={{ backgroundColor: cat?.color ?? '#94a3b8' }}
                           >
-                            {(cat?.name ?? 'O').charAt(0)}
+                            {cat?.icon
+                              ? <span className="text-base">{cat.icon}</span>
+                              : <span className="text-white">{(cat?.name ?? 'O').charAt(0)}</span>
+                            }
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{m.merchant}</p>
@@ -247,7 +283,7 @@ export default function CardDetailPage() {
                               <p className="text-xs text-gray-400 dark:text-gray-500">{formatShortDate(m.date)}</p>
                               {cat && (
                                 <span className="text-xs px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: cat.color }}>
-                                  {cat.name}
+                                  {cat.icon ? `${cat.icon} ` : ''}{cat.name}
                                 </span>
                               )}
                               {(isMsiParent || isMsiChild) && (
@@ -295,15 +331,6 @@ export default function CardDetailPage() {
             onCancel={() => setEditingMovement(null)}
           />
         </Modal>
-      )}
-      {deleting && (
-        <ConfirmDialog
-          message={deleting.isMsi
-            ? 'Este movimiento es parte de un plan MSI. ¿Eliminar todas las cuotas?'
-            : '¿Eliminar este movimiento?'}
-          onConfirm={handleDelete}
-          onCancel={() => setDeleting(null)}
-        />
       )}
     </div>
   )
