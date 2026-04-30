@@ -107,17 +107,16 @@ export default function MovementForm({ cardId, categories, cards, onSubmit, onCa
         {errors.merchant && <p className="text-red-500 text-xs mt-1">{errors.merchant.message}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha *</label>
-          <input {...register('date')} type="date" className="input" />
-          {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Monto *</label>
-          <input {...register('amount', { valueAsNumber: true })} type="number" step="0.01" placeholder="0.00" className="input" />
-          {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha *</label>
+        <input {...register('date')} type="date" className="input" />
+        {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Monto *</label>
+        <input {...register('amount', { valueAsNumber: true })} type="number" step="0.01" placeholder="0.00" className="input" />
+        {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
       </div>
 
       <div>
@@ -133,7 +132,7 @@ export default function MovementForm({ cardId, categories, cards, onSubmit, onCa
       {type === 'expense' && (
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses sin intereses</label>
-          <select {...register('msi_months')} className="input">
+          <select {...register('msi_months', { valueAsNumber: true })} className="input">
             {MSI_OPTIONS.map(m => (
               <option key={m} value={m}>{m === 0 || m === 1 ? 'Sin MSI' : `${m} meses`}</option>
             ))}
