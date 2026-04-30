@@ -100,7 +100,7 @@ export default function CardDetailPage() {
         </div>
 
         {/* Totales siempre visibles */}
-        <div className="mx-4 mb-3 rounded-xl p-3 text-white grid grid-cols-3 gap-2 text-center" style={{ backgroundColor: card.color }}>
+        <div className="mx-4 mb-3 rounded-xl p-3 text-white grid grid-cols-2 gap-x-4 gap-y-3 text-center" style={{ backgroundColor: card.color }}>
           <div>
             <p className="text-white/70 text-xs">Gastos</p>
             <p className="font-bold text-sm">{formatMXN(totalExpenses)}</p>
@@ -111,11 +111,24 @@ export default function CardDetailPage() {
           </div>
           <div>
             <p className="text-white/70 text-xs mb-1">Balance</p>
-            {/* Píldora con fondo semitransparente para garantizar contraste en cualquier color */}
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full text-white ${balance >= 0 ? 'bg-black/25' : 'bg-black/35'}`}>
               {balance >= 0 ? '+' : ''}{formatMXN(balance)}
             </span>
           </div>
+          {card.credit_limit > 0 && (
+            <div>
+              <p className="text-white/70 text-xs mb-1">Disponible</p>
+              {(() => {
+                const debt = totalExpenses - totalPayments
+                const disponible = card.credit_limit - debt
+                return (
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full text-white ${disponible >= 0 ? 'bg-black/25' : 'bg-black/35'}`}>
+                    {formatMXN(Math.max(disponible, 0))}
+                  </span>
+                )
+              })()}
+            </div>
+          )}
         </div>
 
         {/* Filtros */}
