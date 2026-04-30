@@ -25,7 +25,7 @@ interface MovementFormProps {
   onCancel: () => void
 }
 
-const MSI_OPTIONS = [0, 3, 6, 9, 12, 18, 24]
+const MSI_OPTIONS = [0, 3, 6, 9, 12, 15, 18, 20, 24]
 
 export default function MovementForm({ cardId, categories, cards, initial, onSubmit, onCancel }: MovementFormProps) {
   const today = new Date().toISOString().slice(0, 10)
