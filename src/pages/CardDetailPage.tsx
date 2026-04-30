@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCards } from '../hooks/useCards'
 import { useMovements, useCreateMovement, useUpdateMovement, useDeleteMovement } from '../hooks/useMovements'
@@ -265,7 +265,7 @@ export default function CardDetailPage() {
                     return (
                       <SwipeRow key={m.id} onDelete={() => requestDelete(m)}>
                         <div
-                          className="card p-3 flex items-center gap-3 cursor-pointer active:bg-gray-50 dark:active:bg-gray-800 transition-colors"
+                          className="card p-3 flex items-center gap-3 sm:cursor-default cursor-pointer active:bg-gray-50 dark:active:bg-gray-800 sm:active:bg-transparent transition-colors"
                           onClick={() => setEditingMovement(m)}
                         >
                           <div
@@ -296,6 +296,21 @@ export default function CardDetailPage() {
                           <p className={`text-sm font-semibold flex-shrink-0 ${isExpense ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                             {isExpense ? '-' : '+'}{formatMXN(Math.abs(m.amount))}
                           </p>
+                          {/* Desktop: botones siempre visibles */}
+                          <div className="hidden sm:flex items-center gap-0.5 flex-shrink-0">
+                            <button
+                              onClick={e => { e.stopPropagation(); setEditingMovement(m) }}
+                              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={e => { e.stopPropagation(); requestDelete(m) }}
+                              className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-gray-400 hover:text-red-500"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </SwipeRow>
                     )
