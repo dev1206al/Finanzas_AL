@@ -49,7 +49,7 @@ export default function CategoriesPage() {
   return (
     <div>
       <PageHeader>
-        <div className="flex items-center gap-3 py-1">
+        <div className="flex items-center gap-3 px-4 py-2">
           <button onClick={() => navigate('/ajustes')} className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>

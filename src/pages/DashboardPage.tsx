@@ -95,10 +95,12 @@ export default function DashboardPage() {
   return (
     <div>
       <PageHeader>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{greeting},</p>
-        <div className="flex items-end justify-between">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{name}</h1>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{MONTHS[MONTH - 1]} {YEAR}</p>
+        <div className="px-4 py-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400">{greeting},</p>
+          <div className="flex items-end justify-between">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{name}</h1>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{MONTHS[MONTH - 1]} {YEAR}</p>
+          </div>
         </div>
       </PageHeader>
 

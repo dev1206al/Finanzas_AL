@@ -59,7 +59,7 @@ export default function CardsPage() {
   return (
     <div>
       <PageHeader>
-        <div className="flex items-center justify-between py-1">
+        <div className="flex items-center justify-between px-4 py-2">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Tarjetas</h1>
           <button
             onClick={() => setShowForm(true)}

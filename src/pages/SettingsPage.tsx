@@ -46,7 +46,9 @@ export default function SettingsPage() {
     <div>
       {/* ── Sticky header ── */}
       <PageHeader>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white py-1">Ajustes</h1>
+        <div className="px-4 py-2">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Ajustes</h1>
+        </div>
       </PageHeader>
 
       <div className="px-4 py-4 space-y-4">
