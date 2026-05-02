@@ -322,15 +322,6 @@ export default function CardDetailPage() {
         )}
       </div>
 
-      {/* ── FAB ── */}
-      <button
-        onClick={() => setShowForm(true)}
-        className="fixed fab-position right-4 z-40 w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform"
-        style={{ boxShadow: '0 4px 20px rgba(94,23,235,0.4)' }}
-      >
-        <Plus className="w-6 h-6" />
-      </button>
-
       {showForm && (
         <Modal title="Nuevo movimiento" onClose={() => setShowForm(false)}>
           <MovementForm cardId={id!} categories={categories} history={allMovements} onSubmit={handleCreate} onCancel={() => setShowForm(false)} />

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, TrendingDown, TrendingUp, CreditCard, ChevronRight, ArrowDownLeft, ArrowUpRight, Plus } from 'lucide-react'
+import { AlertCircle, TrendingDown, TrendingUp, CreditCard, ChevronRight, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCards, getNextDate, getDaysUntil } from '../hooks/useCards'
 import { useMovements, useCreateMovement } from '../hooks/useMovements'
@@ -255,18 +255,6 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-
-      {/* ── FAB ── */}
-      <button
-        onClick={() => {
-          if (cards.length === 0) { toast.error('Primero agrega una tarjeta'); return }
-          setQuickAdd('expense')
-        }}
-        className="fixed fab-position right-4 z-40 w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform"
-        style={{ boxShadow: '0 4px 20px rgba(94,23,235,0.4)' }}
-      >
-        <Plus className="w-6 h-6" />
-      </button>
 
       {/* ── Modal Egreso rápido ── */}
       {quickAdd === 'expense' && defaultCard && (

@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { LayoutDashboard, CreditCard, BarChart2, Wallet, Settings, RefreshCw } from 'lucide-react'
 import { usePullToRefresh } from '../../hooks/usePullToRefresh'
+import SpeedDial from '../ui/SpeedDial'
 
 const navItems = [
   { to: '/',         icon: LayoutDashboard, label: 'Inicio'   },
@@ -80,6 +81,8 @@ export default function AppLayout() {
           <Outlet />
         </div>
       </main>
+
+      <SpeedDial />
 
       {/* ── Bottom nav — solo móvil ── */}
       <nav
