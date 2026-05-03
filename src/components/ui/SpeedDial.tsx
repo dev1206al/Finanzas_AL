@@ -12,11 +12,11 @@ import CardForm, { type CardFormData } from '../cards/CardForm'
 import type { Movement, IncomeMovement } from '../../types/database'
 
 // Fan: 3 items spreading up-left from FAB (bottom-right)
-// Angles from vertical: 10°, 45°, 80° — radius 82px
+// Angles from vertical: 20°, 55°, 90° — radius 82px — equal arc spacing
 const FAN = [
-  { x: -14, y: -81, label: 'Agregar movimiento', color: '#6366f1', icon: <Receipt className="w-5 h-5" /> },
-  { x: -58, y: -58, label: 'Agregar ingreso',    color: '#22c55e', icon: <Wallet  className="w-5 h-5" /> },
-  { x: -81, y: -14, label: 'Agregar tarjeta',    color: '#0ea5e9', icon: <CreditCard className="w-5 h-5" /> },
+  { x: -28, y: -77, label: 'Movimiento', color: '#6366f1', icon: <Receipt className="w-5 h-5" /> },
+  { x: -67, y: -47, label: 'Ingreso',    color: '#22c55e', icon: <Wallet  className="w-5 h-5" /> },
+  { x: -82, y:  -8, label: 'Tarjeta',    color: '#0ea5e9', icon: <CreditCard className="w-5 h-5" /> },
 ]
 
 type Modal = 'movement' | 'income' | 'card' | null
