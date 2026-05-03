@@ -11,29 +11,27 @@ import IncomeMovementForm from '../income/IncomeMovementForm'
 import CardForm, { type CardFormData } from '../cards/CardForm'
 import type { Movement, IncomeMovement } from '../../types/database'
 
-// Fan: 3 items spreading up-left from FAB (bottom-right)
-// Angles from vertical: 20°, 55°, 90° — radius 82px — equal arc spacing
-const FAN = [
-  { x: -28, y: -77, label: 'Movimiento', color: '#6366f1', icon: <Receipt className="w-5 h-5" /> },
-  { x: -67, y: -47, label: 'Ingreso',    color: '#22c55e', icon: <Wallet  className="w-5 h-5" /> },
-  { x: -82, y:  -8, label: 'Tarjeta',    color: '#0ea5e9', icon: <CreditCard className="w-5 h-5" /> },
+const ACTIONS = [
+  { label: 'Movimiento', color: '#6366f1', icon: <Receipt   className="w-5 h-5" /> },
+  { label: 'Ingreso',    color: '#22c55e', icon: <Wallet    className="w-5 h-5" /> },
+  { label: 'Tarjeta',   color: '#0ea5e9', icon: <CreditCard className="w-5 h-5" /> },
 ]
 
-type Modal = 'movement' | 'income' | 'card' | null
+type ModalKey = 'movement' | 'income' | 'card' | null
 
 export default function SpeedDial() {
-  const [open, setOpen] = useState(false)
-  const [modal, setModal] = useState<Modal>(null)
+  const [open, setOpen]   = useState(false)
+  const [modal, setModal] = useState<ModalKey>(null)
 
-  const { data: cards = [] }    = useCards()
-  const { data: accounts = [] } = useIncomeAccounts()
+  const { data: cards      = [] } = useCards()
+  const { data: accounts   = [] } = useIncomeAccounts()
   const { data: categories = [] } = useCategories()
 
-  const createMovement      = useCreateMovement()
+  const createMovement       = useCreateMovement()
   const createIncomeMovement = useCreateIncomeMovement()
-  const createCard          = useCreateCard()
+  const createCard           = useCreateCard()
 
-  function openModal(m: Modal) { setOpen(false); setModal(m) }
+  function openModal(m: ModalKey) { setOpen(false); setModal(m) }
 
   function handleAction(idx: number) {
     if (idx === 0) {
@@ -48,31 +46,21 @@ export default function SpeedDial() {
   }
 
   async function handleCreateMovement(data: Omit<Movement, 'id' | 'created_at' | 'user_id'>) {
-    try {
-      await createMovement.mutateAsync(data)
-      toast.success('Movimiento registrado')
-      setModal(null)
-    } catch { toast.error('Error al guardar') }
+    try { await createMovement.mutateAsync(data); toast.success('Movimiento registrado'); setModal(null) }
+    catch { toast.error('Error al guardar') }
   }
 
   async function handleCreateIncome(data: Omit<IncomeMovement, 'id' | 'created_at' | 'user_id'>) {
-    try {
-      await createIncomeMovement.mutateAsync(data)
-      toast.success('Movimiento registrado')
-      setModal(null)
-    } catch { toast.error('Error al guardar') }
+    try { await createIncomeMovement.mutateAsync(data); toast.success('Movimiento registrado'); setModal(null) }
+    catch { toast.error('Error al guardar') }
   }
 
   async function handleCreateCard(data: CardFormData) {
     try {
       await createCard.mutateAsync({
-        name: data.name,
-        bank: data.bank || null,
-        color: data.color,
-        credit_limit: data.credit_limit,
-        cut_day: data.cut_day,
-        payment_day: data.payment_day,
-        last_four: data.last_four || null,
+        name: data.name, bank: data.bank || null, color: data.color,
+        credit_limit: data.credit_limit, cut_day: data.cut_day,
+        payment_day: data.payment_day, last_four: data.last_four || null,
         is_active: true,
       })
       toast.success('Tarjeta agregada')
@@ -90,43 +78,54 @@ export default function SpeedDial() {
         />
       )}
 
-      {/* Speed Dial */}
-      <div className="fixed fab-position right-4 z-50">
-        {/* Fan items */}
-        {FAN.map((item, i) => (
-          <div
-            key={i}
-            className="absolute bottom-0 right-0 flex items-center gap-2.5"
-            style={{
-              transform: open
-                ? `translate(${item.x}px, ${item.y}px)`
-                : 'translate(0, 0)',
-              opacity: open ? 1 : 0,
-              transition: open
-                ? `transform 0.25s cubic-bezier(0.34,1.56,0.64,1) ${i * 55}ms, opacity 0.15s ease ${i * 55}ms`
-                : `transform 0.18s ease ${(FAN.length - 1 - i) * 40}ms, opacity 0.12s ease ${(FAN.length - 1 - i) * 40}ms`,
-              pointerEvents: open ? 'auto' : 'none',
-            }}
-          >
-            {/* Label */}
-            <span className="bg-gray-900 dark:bg-gray-800 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-lg whitespace-nowrap select-none">
-              {item.label}
-            </span>
-            {/* Action button */}
-            <button
-              onClick={() => handleAction(i)}
-              className="w-11 h-11 rounded-full shadow-lg flex items-center justify-center text-white active:scale-90 transition-transform flex-shrink-0"
-              style={{ backgroundColor: item.color, boxShadow: `0 4px 14px ${item.color}66` }}
+      {/* Speed Dial — flex-col: items arriba, FAB abajo */}
+      <div className="fixed fab-position right-4 z-50 flex flex-col items-end gap-3">
+
+        {/* Action items */}
+        {ACTIONS.map((action, i) => {
+          // Al abrir: el más cercano al FAB (Tarjeta, i=2) aparece primero
+          const openDelay  = (ACTIONS.length - 1 - i) * 55
+          // Al cerrar: el más alejado (Movimiento, i=0) desaparece primero
+          const closeDelay = i * 40
+
+          return (
+            <div
+              key={action.label}
+              className="flex items-center gap-2.5"
+              style={{
+                opacity:   open ? 1 : 0,
+                transform: open
+                  ? 'translateY(0) scale(1)'
+                  : 'translateY(12px) scale(0.85)',
+                transition: open
+                  ? `opacity .18s ease ${openDelay}ms, transform .26s cubic-bezier(.34,1.56,.64,1) ${openDelay}ms`
+                  : `opacity .14s ease ${closeDelay}ms, transform .16s ease ${closeDelay}ms`,
+                pointerEvents: open ? 'auto' : 'none',
+              }}
             >
-              {item.icon}
-            </button>
-          </div>
-        ))}
+              {/* Label */}
+              <span className="bg-gray-900 dark:bg-gray-800 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-lg whitespace-nowrap select-none">
+                {action.label}
+              </span>
+              {/* Button */}
+              <button
+                onClick={() => handleAction(i)}
+                className="w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white active:scale-90 transition-transform flex-shrink-0"
+                style={{
+                  backgroundColor: action.color,
+                  boxShadow: `0 4px 16px ${action.color}55`,
+                }}
+              >
+                {action.icon}
+              </button>
+            </div>
+          )
+        })}
 
         {/* Main FAB */}
         <button
           onClick={() => setOpen(prev => !prev)}
-          className="w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center active:scale-90 transition-all"
+          className="w-14 h-14 rounded-full bg-violet-600 text-white flex items-center justify-center active:scale-90 transition-transform"
           style={{ boxShadow: '0 4px 20px rgba(94,23,235,0.4)' }}
         >
           <Plus
